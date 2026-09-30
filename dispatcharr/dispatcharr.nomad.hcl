@@ -69,7 +69,7 @@ EOT
       }
 
       resources {
-        cpu    = 4
+        cpu    = 1
         memory = 2048
       }
     }
@@ -119,7 +119,7 @@ EOT
       }
 
       resources {
-        cpu    = 2
+        cpu    = 1
         memory = 2048
       }
     }
