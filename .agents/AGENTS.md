@@ -205,6 +205,21 @@ before trusting a spec, not just by inspecting the HCL. See README's
 "Bringing an already-running job under Terraform" for the exact commands for
 the five nextcloud jobs.
 
+## Adding a new job — checklist
+
+1. `<job>/<job>.nomad.hcl` + a `nomad_job` resource in `main.tf` (README's
+   "Adding a new job" has the exact snippet).
+2. `<job>/README.md` — what it runs, notable choices, a "Consul KV keys"
+   table (or an explicit "None" line if it needs none).
+3. **Add it to the linked job list at the top of `README.md`'s "Jobs"
+   section.** Easy to forget since nothing enforces it — the list is only
+   useful if it's actually complete, so treat a new job dir without a
+   corresponding list entry as an incomplete PR, same as one missing a
+   README.
+4. If it's already running (migrated from the legacy repo), add its
+   `terraform import` line to both this file's and `README.md`'s import
+   command lists.
+
 ## Don't
 
 - Don't hand-deploy a job spec that lives in this repo directly against the
