@@ -51,6 +51,38 @@ specific to working here.
   Homebrew), some via `driver = "container"` (Apple's `container` CLI, not
   Docker).
 
+## macOS CPU fingerprint — very little headroom, use tiny `cpu` values
+
+Nomad's CPU fingerprinting on these macOS/Apple Silicon hosts does **not**
+report the usual MHz-scale totals you'd get on Linux x86 (there, a client
+typically fingerprints in the thousands-to-tens-of-thousands, e.g. an i5
+like jellify's Optiplexes). Here it comes out in the single/double digits
+per node instead. Every `resources { cpu = ... }` value across every job in
+this repo is consistently a small integer (1-16 — `jellyfin`'s `cpu = 10` is
+the highest in the whole repo) specifically because of this, not because
+these are all trivially lightweight workloads.
+
+This isn't just inferred from the numbers looking small — there's a real
+incident behind it: `guacamole`'s first (and so far only) deploy attempt
+(2026-09-30) got stuck permanently blocked/unscheduled because its three
+tasks together only needed `cpu = 4`, and that alone was enough to exhaust
+free CPU across all three cosmonautical hosts at once (see its README and
+`CHANGELOG.md`). Corroborated on the jellify side too:
+`Jellify/Nomad-Jobs/actions-runner/actions-runner.nomad.hcl` constrains to
+the same `darwin`/`arm64` host type and uses `cpu = 16  # MHz`, while that
+repo's Ubuntu/amd64-constrained jobs (`minecraft`'s main task, `valheim`)
+use normal-scale values like `cpu = 10000` on the same underlying Nomad
+region.
+
+**Practical effect**: don't reach for typical Nomad MHz-scale sizing
+(hundreds/thousands) for a new job's `cpu` here — follow this repo's
+existing small-integer convention instead (look at a similarly-weighted
+job's task for a starting point), and budget for very little slack across
+the whole 3-host pool when several jobs deploy/restart together. This is
+observed behavior from this repo's job history, not something confirmed
+against Nomad's own fingerprinter source — treat it as a strong empirical
+pattern, not a documented guarantee.
+
 ## This repo is public — never commit a real secret value
 
 `Cosmonautical-Cloud/Nomad-Jobs` is a **public** GitHub repo. Every
@@ -78,6 +110,14 @@ literal secrets first:**
 grep -rnoE '(PASSWORD|SECRET|TOKEN|API_KEY|ACCESS_KEY|PRIVATE_KEY)[[:space:]]*[:=][[:space:]]*"[^"$]{3,}"' --include="*.hcl" .
 grep -rniE '(BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|AKIA[0-9A-Z]{16})' .
 ```
+
+That first grep false-positives on every legitimate `TOKEN="{{ key "..." }}"`
+template reference (the `"` inside `{{ key "..." }}"` terminates its match
+early) — expect noise, read each hit rather than trusting a clean/dirty
+result at a glance. `tests/test_conventions.py::test_no_hardcoded_secrets`
+runs the same idea but strips `{{ ... }}` expressions first, so it doesn't
+have this false-positive problem and is safe to trust as a CI gate — prefer
+it over this grep when scripting rather than reading by hand.
 
 **Lower-severity, not-yet-fixed**: a handful of internal RFC1918 IPs
 (`10.10.37.x`) are hardcoded in `guacamole.nomad.hcl` (the 5 Macs' VNC
@@ -126,6 +166,41 @@ live keys already populated for the legacy deploy.
 
 Each job's own README has a "Consul KV keys" table listing exactly what it
 needs — check there rather than grepping the `.hcl` by hand.
+
+## Non-secret config (Nomad Variables)
+
+**Convention started 2026-09-30, on `romm` — not retrofitted onto older
+jobs yet.** Split by sensitivity, not just "is it config": secrets stay in
+Consul KV as above; non-sensitive but deployment-specific values (URLs,
+hostnames, labels — anything a redeploy to a different environment/domain
+would need to change) go in a [Nomad
+Variable](https://developer.hashicorp.com/nomad/docs/job-declare/nomad-variables)
+instead of being hardcoded into the `.nomad.hcl` file, so the spec itself
+stays reusable. Values that are structural identifiers a job owns (DB
+name/user, a task's own Keycloak client ID, port labels) stay as plain HCL
+literals either way — this split is about environment-shaped config
+specifically, not "anything that isn't a password."
+
+Path convention: `nomad/jobs/<job-id>` (HashiCorp's own idiomatic path,
+also the one a task gets implicit read access to if this cluster's Nomad
+ACLs are ever turned on). Read in a `template` block with
+`{{ with nomadVar "nomad/jobs/<job-id>" }}{{ .KEY }}{{ end }}` — same
+consul-template engine as `{{ key "..." }}`, different backend. Keep these
+in their own `template` block (`destination = "local/..."`, not
+`secrets/...` — it isn't sensitive) rather than merging into the same
+template as Consul KV secrets, so the two sources stay visibly distinct in
+the spec.
+
+No `nomad` CLI on any host (same constraint as Consul KV), so populate by
+hand via the HTTP API instead of `nomad var put`:
+
+```sh
+curl -X PUT 127.0.0.1:4646/v1/var/nomad/jobs/<job-id> -d '{"Items": {"KEY": "value"}}'
+```
+
+Each job's own README should have a "Nomad Variables" table (parallel to
+its "Consul KV keys" one) listing exactly what it needs — see `romm`'s
+README for the first example of this.
 
 ## Known gotchas
 
@@ -221,10 +296,11 @@ bare `apply` will be forgiving.
 2. `<job>/README.md` — what it runs, notable choices, a "Consul KV keys"
    table (or an explicit "None" line if it needs none).
 3. **Add it to the linked job list at the top of `README.md`'s "Jobs"
-   section.** Easy to forget since nothing enforces it — the list is only
-   useful if it's actually complete, so treat a new job dir without a
-   corresponding list entry as an incomplete PR, same as one missing a
-   README.
+   section.** The list is only useful if it's actually complete, so treat a
+   new job dir without a corresponding list entry as an incomplete PR, same
+   as one missing a README. `tests/test_conventions.py` now enforces this
+   (and the README/`main.tf` requirements above) in CI — see the top-level
+   README's "Testing" section.
 4. If it's already running (migrated from the legacy repo), `terraform
    import nomad_job.<id> <id>` and verify a true no-op `plan` before ever
    letting Semaphore `apply` — see "Terraform import workflow" below for

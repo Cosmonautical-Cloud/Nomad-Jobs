@@ -15,6 +15,40 @@ job "sabnzbd" {
       port "http" { static = 8085 }
     }
 
+    # Litestream doesn't create its destination bucket itself (confirmed
+    # 2026-09-30: replication silently failed for hours with NoSuchBucket
+    # errors after this job's Terraform migration re-registered it, since
+    # the bucket had never actually existed on seaweedfs-filer). This makes
+    # bucket creation part of every deploy instead of a one-time manual
+    # step - see CHANGELOG.md.
+    task "ensure-backup-bucket" {
+      driver = "raw_exec"
+
+      lifecycle {
+        hook    = "prestart"
+        sidecar = false
+      }
+
+      template {
+        data        = <<EOT
+#!/bin/sh
+set -eu
+printf 's3.bucket.create -name sabnzbd-backups\nexit\n' | /opt/homebrew/bin/weed shell -filer={{ range service "seaweedfs-filer" }}{{ .Address }}:{{ .Port }}{{ end }}
+EOT
+        destination = "local/ensure-bucket.sh"
+        perms       = "755"
+      }
+
+      config {
+        command = "${NOMAD_TASK_DIR}/ensure-bucket.sh"
+      }
+
+      resources {
+        cpu    = 1
+        memory = 32
+      }
+    }
+
     task "seed-data" {
       driver = "raw_exec"
 

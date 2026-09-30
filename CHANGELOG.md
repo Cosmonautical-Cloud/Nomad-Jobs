@@ -31,6 +31,44 @@ Newest entries first, grouped by job.
   PRs are a signal only, they can't recompute the sha256 a human still has
   to update by hand.
 
+## romm
+
+### 2026-09-30
+
+- **New job.** [RomM](https://github.com/rommapp/romm) — self-hosted ROM
+  library manager, `container` driver, Keycloak OIDC SSO
+  (`roms.cosmonautical.cloud`). Originally scoped as SQLite + Litestream
+  (matching `slskd`/`sabnzbd`'s pattern), but RomM dropped SQLite support in
+  3.0+ (MariaDB/MySQL/PostgreSQL only) — so it runs `ROMM_DB_DRIVER=postgresql`
+  against the shared `postgres` cluster instead, same as `guacamole`/`seerr`,
+  with no Litestream involved and no new backing service. ROM library mount
+  is read-only (`/Volumes/ROMs`, the same NFS library `nextcloud-roms-scan`
+  indexes into Nextcloud) so RomM can't become a second writer into it.
+
+## slskd / sabnzbd
+
+### 2026-09-30
+
+- **Litestream replication for both jobs was silently broken since their
+  current allocations started** (confirmed via live investigation on
+  `cassiopeia`/`betelgeuse`: `litestream.stdout` logs showed thousands of
+  consecutive `NoSuchBucket` errors, and the `slskd-backups`/
+  `sabnzbd-backups` buckets simply didn't exist on `seaweedfs-filer` — its
+  `/buckets/` listing had only the built-in `.system` entry). Root cause:
+  Litestream (v0.5.17) doesn't issue `CreateBucket` itself, and these
+  buckets had apparently never actually been created, going all the way
+  back before today's Terraform migration — there's no prior evidence
+  either job's replication ever worked. Fixed live by creating both
+  buckets via `weed shell -filer=betelgeuse.cosmonautical.cloud:8888`'s
+  `s3.bucket.create` (no S3 credentials needed — this goes through the
+  filer's native bucket management, not the S3 gateway's auth layer);
+  Litestream's pending backlog flushed through immediately
+  (`sync recovered` + a real compaction in both jobs' logs within two
+  minutes). Both job specs now also get an `ensure-backup-bucket` prestart
+  task doing the same idempotent `s3.bucket.create` on every deploy, so
+  this can't silently regress if a bucket is ever lost again — see each
+  job's own README and `seaweedfs-filer`'s README.
+
 ## guacamole
 
 ### 2026-09-30

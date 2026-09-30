@@ -13,6 +13,14 @@ there on start if missing locally — same pattern as [`slskd`](../slskd)'s
 strategy than `lidarr`'s periodic `sqlite3 .backup` copy: continuous
 streaming replication vs. a snapshot every 5 minutes.
 
+The `ensure-backup-bucket` prestart task creates `sabnzbd-backups` (via
+`weed shell -filer=... s3.bucket.create`, idempotent) before Litestream
+ever starts. This exists because Litestream doesn't create its own
+destination bucket — found 2026-09-30 when this job's Terraform migration
+re-registered it and replication silently failed for hours with
+`NoSuchBucket` errors, since the bucket had genuinely never existed on
+`seaweedfs-filer` before. See `CHANGELOG.md`.
+
 ## Consul KV keys
 
 | Key | Used for |

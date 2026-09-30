@@ -16,6 +16,14 @@ gateway and restored from there on start — same reasoning as `sabnzbd`'s
 history DB: these two files change too often for a 5-minute snapshot to be
 a good backup strategy.
 
+The `ensure-backup-bucket` prestart task creates `slskd-backups` (via
+`weed shell -filer=... s3.bucket.create`, idempotent) before Litestream
+ever starts. This exists because Litestream doesn't create its own
+destination bucket — found 2026-09-30 when this job's Terraform migration
+re-registered it and replication silently failed for hours with
+`NoSuchBucket` errors, since the bucket had genuinely never existed on
+`seaweedfs-filer` before. See `CHANGELOG.md`.
+
 No Traefik tags — internal-only.
 
 ## Consul KV keys
