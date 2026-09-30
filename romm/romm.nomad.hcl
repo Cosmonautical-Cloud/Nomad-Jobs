@@ -106,12 +106,12 @@ job "romm" {
         ports = ["http"]
 
         # /Volumes/ROMs is the same NFS-backed ROM library nextcloud-roms-scan
-        # indexes into Nextcloud - mounted read-only here so RomM (library
-        # browsing/metadata/play) can't be a second, less-trusted writer into
-        # a library Nextcloud also manages. Flip to rw if RomM-side library
-        # organization/renaming ends up wanted.
+        # indexes into Nextcloud. Originally mounted read-only so RomM
+        # couldn't be a second writer into it, but RomM's own "add platform"
+        # UI needs to create the platform's folder on disk - flipped to rw
+        # 2026-09-30 once that was actually wanted (see CHANGELOG.md).
         volumes = [
-          "/Volumes/ROMs:/romm/library:ro",
+          "/Volumes/ROMs:/romm/library",
           "/Volumes/Cosmonautical/romm/assets:/romm/assets",
           "/Volumes/Cosmonautical/romm/config:/romm/config",
           "/Volumes/Cosmonautical/romm/resources:/romm/resources"

@@ -70,6 +70,14 @@ Newest entries first, grouped by job.
      `WEB_SERVER_CONCURRENCY=2` — plenty for single-tenant use, and keeps
      the footprint down regardless.
 
+- **Library mount flipped from `:ro` to `:rw`.** Adding a platform through
+  RomM's UI (`ios`/`mac`/`xbox360`/`xbox`/`series-x-s`, none of which existed
+  in the library yet) failed with `[Errno 30] Read-only file system` — that
+  feature needs to create the platform's folder on disk. Read-only was a
+  deliberate choice to keep RomM from being a second writer alongside
+  `nextcloud-roms-scan`, but the UI-driven platform management was wanted
+  more than that protection, so the mount is now read-write.
+
 ## slskd / sabnzbd
 
 ### 2026-09-30

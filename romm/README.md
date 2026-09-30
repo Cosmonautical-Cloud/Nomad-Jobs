@@ -27,9 +27,17 @@ on container start, so no schema-loading step is needed the way
 `guacamole`'s JDBC extension needs one.
 
 The ROM library mount (`/Volumes/ROMs`) is the same NFS-backed library
-[`nextcloud-roms-scan`](../nextcloud-roms-scan) indexes into Nextcloud —
-mounted **read-only** here so RomM can't be a second, less-trusted writer
-into a library Nextcloud also manages. RomM's `assets` (saves/states),
+[`nextcloud-roms-scan`](../nextcloud-roms-scan) indexes into Nextcloud.
+Originally mounted read-only so RomM couldn't be a second, less-trusted
+writer into a library Nextcloud also manages — flipped to **read-write**
+2026-09-30 (see `CHANGELOG.md`) once RomM's own "add platform" UI was
+actually wanted, since that feature needs to create the platform's folder
+on disk (`POST`ing a new platform without write access fails with
+`[Errno 30] Read-only file system`). RomM is now a second writer into this
+library alongside Nextcloud — worth keeping in mind if the two ever fight
+over the same file, though in practice RomM only creates platform folders
+and writes files a user explicitly uploads/renames through its own UI.
+RomM's `assets` (saves/states),
 `config`, and `resources` (downloaded cover art/screenshots) volumes are
 on NFS at `/Volumes/Cosmonautical/romm/{assets,config,resources}` — these
 three directories need to exist on the NAS before first deploy (same
