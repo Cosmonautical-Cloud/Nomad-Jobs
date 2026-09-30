@@ -29,8 +29,22 @@ datacenter: [`Jellify/Nomad-Jobs`](https://github.com/Jellify-Music/Nomad-Jobs)
 │   └── nextcloud-preview-generate.nomad.hcl
 ├── nextcloud-s3-backup/
 │   └── nextcloud-s3-backup.nomad.hcl
-└── nextcloud-roms-scan/
-    └── nextcloud-roms-scan.nomad.hcl
+├── nextcloud-roms-scan/
+│   └── nextcloud-roms-scan.nomad.hcl
+├── postgres/
+│   └── postgres.nomad.hcl
+├── postgres-backup/
+│   └── postgres-backup.nomad.hcl
+├── redis/
+│   └── redis.nomad.hcl
+├── traefik/
+│   └── traefik.nomad.hcl
+├── seaweedfs/
+│   └── seaweedfs.nomad.hcl
+├── seaweedfs-filer/
+│   └── seaweedfs-filer.nomad.hcl
+└── seaweedfs-nfs-backup/
+    └── seaweedfs-nfs-backup.nomad.hcl
 ```
 
 This is a single root module — every job is one `nomad_job` resource in the
@@ -108,13 +122,14 @@ the jellify repo's (`nomad-jobs`) — see `versions.tf`.
 
 ## Bringing an already-running job under Terraform
 
-All five jobs here were already registered and running (real user data —
-Nextcloud's Postgres/Redis-backed instance, a daily S3 backup, scheduled
-scans) before this repo existed, having been deployed by hand against the
-cluster's HTTP API from the legacy `nomad-jobs` repo. Applying any of their
-configs for the first time must not re-trigger a deploy. Import the existing
-job into state instead of creating it fresh, then confirm a plan is a true
-no-op before ever running apply:
+Every job in this repo was already registered and running (real user data —
+Nextcloud's Postgres/Redis-backed instance, the shared Postgres/Redis/
+SeaweedFS infra tier, the cluster's own ingress) before its directory
+existed here, having been deployed by hand against the cluster's HTTP API
+from the legacy `nomad-jobs` repo. Applying any of their configs for the
+first time must not re-trigger a deploy. Import the existing job into state
+instead of creating it fresh, then confirm a plan is a true no-op before
+ever running apply:
 
 ```sh
 terraform init
@@ -123,6 +138,13 @@ terraform import nomad_job.nextcloud-cron nextcloud-cron
 terraform import nomad_job.nextcloud-preview-generate nextcloud-preview-generate
 terraform import nomad_job.nextcloud-s3-backup nextcloud-s3-backup
 terraform import nomad_job.nextcloud-roms-scan nextcloud-roms-scan
+terraform import nomad_job.postgres postgres
+terraform import nomad_job.postgres-backup postgres-backup
+terraform import nomad_job.redis redis
+terraform import nomad_job.traefik traefik
+terraform import nomad_job.seaweedfs seaweedfs
+terraform import nomad_job.seaweedfs-filer seaweedfs-filer
+terraform import nomad_job.seaweedfs-nfs-backup seaweedfs-nfs-backup
 terraform plan   # must show "No changes" - if it doesn't, stop and diff by hand first
 ```
 
@@ -130,6 +152,10 @@ Before importing, confirm each job is actually still registered as expected
 (`GET /v1/job/<id>` against the live cluster) — the legacy repo's copies can
 drift from what's actually deployed, and only files modified within the last
 week are worth trusting without a fresh diff (see `.agents/AGENTS.md`).
+`traefik` and `seaweedfs` are worth extra care before importing — they're
+the cluster's ingress and shared storage tier respectively, so a bad import
+(or a plan that isn't actually a no-op) has a wide blast radius if `apply`
+ever ran against it by mistake.
 
 Only once `plan` looks right should Semaphore (or a human) ever run `apply`.
 

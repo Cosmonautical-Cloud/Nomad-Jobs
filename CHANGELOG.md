@@ -10,6 +10,34 @@ repo made.
 
 Newest entries first, grouped by job.
 
+## postgres / postgres-backup / redis / traefik / seaweedfs / seaweedfs-filer / seaweedfs-nfs-backup
+
+### 2026-09-30
+
+- **Brought under Terraform**, migrated unmodified from the legacy
+  `nomad-jobs` repo (`postgres/postgres.nomad.hcl`,
+  `postgres/postgres-backup.nomad.hcl`, `redis.nomad.hcl`, `traefik.nomad`,
+  `seaweedfs/seaweedfs.nomad.hcl`, `seaweedfs/seaweedfs-filer.nomad.hcl`,
+  `seaweedfs/seaweedfs-backup.nomad.ncl`). No behavioral changes, just the
+  move — this is the shared infra tier the `nextcloud` jobs (and future app
+  jobs) already depend on via Consul service discovery, now brought under
+  the same management as everything else here.
+  - `seaweedfs-backup.nomad.ncl` → directory/file renamed to
+    `seaweedfs-nfs-backup` to match its actual job ID
+    (`job "seaweedfs-nfs-backup"`), per this repo's job-ID-based naming
+    convention — the legacy repo's filename didn't match its own job ID.
+  - `traefik.nomad` → renamed to `traefik.nomad.hcl` for extension
+    consistency with every other job spec here; content unchanged.
+  - `seaweedfs/replication.toml` was **not** copied over — confirmed (via
+    the legacy repo's own README) to be a dead leftover duplicate of the
+    `template` block already embedded in `seaweedfs-nfs-backup`'s job spec,
+    never read by anything.
+  - All seven were already registered/running before this migration —
+    each needs `terraform import` before the first `apply` (see README's
+    "Bringing an already-running job under Terraform"). `traefik` and
+    `seaweedfs` carry the widest blast radius of anything in this repo if
+    an import or plan goes wrong — front-load care there.
+
 ## nextcloud / nextcloud-cron / nextcloud-preview-generate / nextcloud-s3-backup / nextcloud-roms-scan
 
 ### 2026-09-30

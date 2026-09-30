@@ -118,6 +118,27 @@ which still apply (same hosts, same OS, same drivers). Most relevant to
   jobs (all use `raw_exec` + Homebrew PHP/Caddy, already working), but worth
   knowing before adding a new task here.
 
+## Shared infra tier (postgres / redis / traefik / seaweedfs)
+
+As of 2026-09-30 this repo also owns the cluster's shared backing services,
+not just app jobs:
+
+- **`traefik` fronts both datacenters, not just cosmonautical** — its
+  `minecraft`/`bedrock`/`valheim-*` ports and `update-port-forward` task
+  exist to route to jobs running in **jellify** (`Jellify/Nomad-Jobs`'s
+  `minecraft`/`valheim`), since Consul (and the UniFi router) are shared
+  cluster-wide. There is deliberately only one Traefik in the whole cluster.
+  See `traefik/README.md`.
+- **`postgres` and `redis` are both HA (Patroni / Sentinel)** — always
+  discover the writer through the plain `postgres`/`redis` Consul service
+  names (gated to the current leader/master), never a specific host or the
+  always-healthy `postgres-node`/`redis-node` variants, unless a job
+  specifically needs every node.
+- **`seaweedfs` is a `system` job** — one alloc per group per eligible host
+  automatically, not a fixed `count`. Its `-peers`/`-mserver` host lists are
+  hardcoded to all three cosmonautical hosts, so it can't currently expand
+  past this datacenter's three nodes without editing those flags too.
+
 ## Terraform import workflow
 
 A job already running when brought under Terraform needs `terraform import
