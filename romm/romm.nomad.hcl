@@ -55,6 +55,49 @@ job "romm" {
       }
     }
 
+    # Idempotent bootstrap, re-run on every deploy: RomM 5.x no longer
+    # auto-detects a `{platform}/roms/{game}` + `{platform}/bios` layout (our
+    # library's actual structure) - without this file declaring it,
+    # config_manager logs a CRITICAL and the startup script exits, which
+    # looks from Nomad's side like a plain crash loop (exit 0, no visible
+    # error unless you catch a still-running container and read past
+    # "Running database migrations"). Found 2026-09-30 - see CHANGELOG.md.
+    # Written straight onto the NFS-backed config/ volume, not into the
+    # container's own /local - the romm task mounts the same host path.
+    task "ensure-config" {
+      driver = "raw_exec"
+
+      lifecycle {
+        hook    = "prestart"
+        sidecar = false
+      }
+
+      template {
+        data        = <<-EOT
+        #!/bin/sh
+        set -eu
+        mkdir -p /Volumes/Cosmonautical/romm/config
+        cat > /Volumes/Cosmonautical/romm/config/config.yml <<'YAML'
+        filesystem:
+          structure:
+            default: "{platform}/roms/{game}"
+            firmware: "{platform}/bios"
+        YAML
+        EOT
+        destination = "local/ensure-config.sh"
+        perms       = "755"
+      }
+
+      config {
+        command = "${NOMAD_TASK_DIR}/ensure-config.sh"
+      }
+
+      resources {
+        cpu    = 1
+        memory = 32
+      }
+    }
+
     task "romm" {
       driver = "container"
 
@@ -90,6 +133,14 @@ job "romm" {
         # defaults true) - no JDBC-style authorization bootstrap required.
         OIDC_ENABLED   = "true"
         OIDC_CLIENT_ID = "romm"
+
+        # Default (4) spawns 4 gunicorn workers on top of nginx, the RQ
+        # worker/scan-worker, and the cron scheduler - all separate Python
+        # processes loading the full app/SQLAlchemy metadata. That got a
+        # worker OOM-killed at this job's original memory = 768 (see
+        # CHANGELOG.md, 2026-09-30). 2 is plenty for single-tenant use and
+        # keeps the footprint down even after the memory bump below.
+        WEB_SERVER_CONCURRENCY = "2"
       }
 
       # Non-sensitive, deployment-specific config (URLs) - Nomad Variables,
@@ -148,7 +199,7 @@ EOT
 
       resources {
         cpu    = 2
-        memory = 768
+        memory = 1536
       }
     }
   }

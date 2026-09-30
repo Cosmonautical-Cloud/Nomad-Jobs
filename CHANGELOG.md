@@ -45,6 +45,31 @@ Newest entries first, grouped by job.
   is read-only (`/Volumes/ROMs`, the same NFS library `nextcloud-roms-scan`
   indexes into Nextcloud) so RomM can't become a second writer into it.
 
+- **First deploy failed placement, then crash-looped, for two unrelated
+  reasons** — both found live on `betelgeuse` right after the first push:
+  1. *Placement*: the job's combined `cpu` ask (schema-init `1` + romm `2`
+     = `3`) was enough to exhaust free CPU on all three cosmonautical hosts
+     at once — the same class of incident as `guacamole`'s (see "macOS CPU
+     fingerprint" in `.agents/AGENTS.md`). Resolved once `dispatcharr`'s own
+     `cpu` was lowered, freeing enough on `betelgeuse` for Nomad's blocked-eval
+     retry to place it.
+  2. *Crash loop*: RomM 5.x no longer auto-detects a `{platform}/roms/{game}`
+     + `{platform}/bios` layout (our library's actual structure) — without an
+     explicit `config.yml` declaring it, `config_manager` logs a `CRITICAL`
+     and the startup script exits 0, which looks like a plain crash loop from
+     Nomad's side (no error visible in `container logs` unless you catch a
+     still-running instance mid-startup — diagnosed via `container run`
+     against the same image/volumes by hand on `betelgeuse`). Fixed with an
+     `ensure-config` idempotent prestart task, same pattern as `slskd`/
+     `sabnzbd`'s `ensure-backup-bucket`.
+  3. Once past both: a gunicorn worker got OOM-killed at the job's original
+     `memory = 768` (default `WEB_SERVER_CONCURRENCY=4` means 4 gunicorn
+     workers plus nginx, the RQ worker/scan-worker, and the cron scheduler
+     all as separate Python processes). Fixed by bumping to `memory = 1536`
+     (betelgeuse had ~2.7 GB free at the time) and setting
+     `WEB_SERVER_CONCURRENCY=2` — plenty for single-tenant use, and keeps
+     the footprint down regardless.
+
 ## slskd / sabnzbd
 
 ### 2026-09-30

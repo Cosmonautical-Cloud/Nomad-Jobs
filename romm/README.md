@@ -35,6 +35,29 @@ on NFS at `/Volumes/Cosmonautical/romm/{assets,config,resources}` — these
 three directories need to exist on the NAS before first deploy (same
 manual-pre-creation expectation as other jobs' NFS-backed paths here).
 
+**`config/config.yml` needs real content, not just the empty file RomM
+creates on its own.** RomM 5.x no longer auto-detects a `{platform}/roms/{game}`
++ `{platform}/bios` layout (our library's actual structure, see
+[`/Volumes/ROMs/README.md`](https://roms.cosmonautical.cloud) on the NFS
+share) — without an explicit declaration it logs a `CRITICAL` from
+`config_manager` and the startup script exits, which looks from the Nomad
+side like a plain crash loop (exit 0, no error visible in `container logs`
+unless you catch a still-running instance and read past "Running database
+migrations"). Found 2026-09-30 (see `CHANGELOG.md`) — fixed the same way as
+`slskd`/`sabnzbd`'s `ensure-backup-bucket`: an idempotent `ensure-config`
+prestart task (re-run on every deploy) writes it straight onto the
+NFS-backed `config/` volume, not into the container's own `/local`:
+
+```yaml
+filesystem:
+  structure:
+    default: "{platform}/roms/{game}"
+    firmware: "{platform}/bios"
+```
+
+Self-healing on every redeploy — if `config/` is ever wiped, the next deploy
+recreates this file before the `romm` task starts.
+
 **Live emulation, not server-side**: RomM's in-browser play (EmulatorJS)
 runs the emulator core as WebAssembly in the user's browser - this job's
 server only ever serves ROM file bytes over HTTP plus small save-state
