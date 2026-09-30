@@ -177,6 +177,22 @@ EOT
         env         = true
       }
 
+      # Metadata-provider credentials - keyOrDefault (not key) so the
+      # template still renders, and the job still deploys, before these are
+      # populated in Consul KV. RomM treats an empty value the same as the
+      # var being unset (scraping for that provider just stays disabled).
+      # See README's "Consul KV keys" table for where to get each key.
+      template {
+        data        = <<EOT
+IGDB_CLIENT_ID={{ keyOrDefault "romm/IGDB_CLIENT_ID" "" }}
+IGDB_CLIENT_SECRET={{ keyOrDefault "romm/IGDB_CLIENT_SECRET" "" }}
+STEAMGRIDDB_API_KEY={{ keyOrDefault "romm/STEAMGRIDDB_API_KEY" "" }}
+RETROACHIEVEMENTS_API_KEY={{ keyOrDefault "romm/RETROACHIEVEMENTS_API_KEY" "" }}
+EOT
+        destination = "secrets/romm-metadata.env"
+        env         = true
+      }
+
       service {
         name = "romm"
         port = "http"

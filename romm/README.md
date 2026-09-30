@@ -75,11 +75,16 @@ opt-in *server-side* "emulator streaming" mode - a genuinely different,
 much heavier feature running real emulator binaries in a separate
 container - not used here.)
 
-IGDB/ScreenScraper/SteamGridDB/RetroAchievements metadata-provider
-credentials aren't wired up - RomM works without them, just without
-scraped metadata/box art. Add `IGDB_CLIENT_ID`/`IGDB_CLIENT_SECRET`/etc. to
-the `romm.env` template and a matching Consul KV entry if scraping is
-wanted later.
+IGDB, SteamGridDB, and RetroAchievements metadata-provider credentials are
+wired up via a dedicated `secrets/romm-metadata.env` template (separate
+from `secrets/romm.env` so the optional, may-not-exist-yet keys stay
+visibly distinct from the required ones). Each uses `keyOrDefault ... ""`
+rather than `key`, so the job still deploys/renders cleanly before a given
+key is actually populated in Consul KV - RomM treats an empty value the
+same as the variable being unset (that provider's scraping just stays
+disabled). ScreenScraper (`SCREENSCRAPER_USER`/`SCREENSCRAPER_PASSWORD`)
+and the no-key flag providers (Hasheous/LaunchBox/PlayMatch/Flashpoint/HLTB)
+aren't wired up yet - same pattern to extend if wanted later.
 
 This is also the first job here storing its non-sensitive config in a
 [Nomad Variable](https://developer.hashicorp.com/nomad/docs/job-declare/nomad-variables)
@@ -96,6 +101,10 @@ section for the convention this establishes going forward.
 | `romm/AUTH_SECRET_KEY` | `ROMM_AUTH_SECRET_KEY` - generate with `openssl rand -hex 32` |
 | `romm/OIDC_CLIENT_SECRET` | Keycloak confidential client secret |
 | `redis/PASSWORD` | Shared Redis cluster auth |
+| `romm/IGDB_CLIENT_ID` | `IGDB_CLIENT_ID` - Twitch Developer Portal, register an app (optional, empty disables IGDB scraping) |
+| `romm/IGDB_CLIENT_SECRET` | `IGDB_CLIENT_SECRET` - same Twitch app (optional) |
+| `romm/STEAMGRIDDB_API_KEY` | `STEAMGRIDDB_API_KEY` - SteamGridDB preferences/API tab (optional, box art only) |
+| `romm/RETROACHIEVEMENTS_API_KEY` | `RETROACHIEVEMENTS_API_KEY` - RA account settings (optional) |
 
 ## Nomad Variables (non-sensitive)
 
