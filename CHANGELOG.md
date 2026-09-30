@@ -10,6 +10,44 @@ repo made.
 
 Newest entries first, grouped by job.
 
+## repo-wide
+
+### 2026-09-30
+
+- **All three of this repo's first commits were actually applied by
+  Semaphore** (its Terraform App plan/approve/apply flow), not just
+  committed — confirmed by reading Terraform state directly out of Consul
+  (`nomad-jobs-cosmonautical` key): every resource this repo defines is
+  present. No `terraform import` step happened first; see the root
+  README's "How these ended up under Terraform" for the full story of why
+  that turned out safe for 26 of 27 jobs and not for `guacamole` (below).
+  This repo (not the legacy `nomad-jobs` repo) is now the thing actually
+  driving the cluster for every job it covers.
+- Added `renovate.json` — Docker image tags (custom regex manager, Nomad
+  job specs aren't a format Renovate parses natively) and Terraform
+  provider versions (native `config:recommended` support) get automatic PRs.
+  Also tracks release versions for the checksum-pinned binary downloads
+  (`keycloak`, `lidarr`, `slskd`, `semaphore`) via `github-releases` — those
+  PRs are a signal only, they can't recompute the sha256 a human still has
+  to update by hand.
+
+## guacamole
+
+### 2026-09-30
+
+- **Pulled out of `main.tf`, not currently deployed.** Its first real
+  `apply` (part of the same-day batch above) tried to schedule all 3 of its
+  tasks for the first time — unlike every other job in that batch, this one
+  had apparently never actually been successfully registered before, so
+  this wasn't a no-op re-registration like the rest. The cluster's 3
+  cosmonautical hosts were all near capacity from the rest of the batch
+  starting up at the same time, so `guacamole`'s allocation got stuck
+  blocked/unscheduled (confirmed via a blocked evaluation showing
+  `ResourcesExhausted` on all 3 nodes). Rather than leave it half-working,
+  the `nomad_job.guacamole` resource was removed from `main.tf` — the job
+  spec and its README stay as reference. Re-add it once there's a reason to
+  actually test it, ideally after confirming the cluster has free capacity.
+
 ## audiomuse-ai / openldap / deemix / dispatcharr / guacamole / jellyfin / keycloak / lidarr / ollama / open-webui / radarr / sabnzbd / seerr / semaphore / slskd / sonarr
 
 ### 2026-09-30

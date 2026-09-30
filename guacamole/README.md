@@ -1,5 +1,14 @@
 # guacamole
 
+**Not currently deployed.** Untested — its first real Terraform `apply`
+(2026-09-30) hit a cluster-wide CPU shortage (all 3 cosmonautical hosts
+exhausted trying to schedule its 3 tasks at once) and got stuck blocked/
+unscheduled, so it was pulled back out of `main.tf` rather than left in a
+half-working state. The job spec and this README stay here as reference;
+re-add the `nomad_job.guacamole` resource to `main.tf` when it's actually
+ready to test, ideally after checking cluster headroom first. See
+`CHANGELOG.md` for the full incident note.
+
 [Apache Guacamole](https://guacamole.apache.org/) (`guacamole/guacamole:1.6.0`
 + `guacamole/guacd:1.6.0`, container driver) — browser-based VNC access to
 all 5 cluster Macs (`cassiopeia`, `taurus`, `betelgeuse`, `galileo`,

@@ -1,0 +1,70 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "dependencyDashboard": true,
+  "schedule": ["before 9am on monday"],
+  "pinDigests": true,
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Docker images referenced directly in Nomad job specs (not a format Renovate recognizes natively)",
+      "managerFilePatterns": ["\\.nomad\\.hcl$"],
+      "matchStrings": [
+        "image\\s*=\\s*\"(?<depName>[^:@\"]+):(?<currentValue>[^@\"]+)(?:@(?<currentDigest>sha256:[a-f0-9]+))?\""
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Keycloak release tarball, checksum-pinned in an artifact block - PRs from this manager need a manual checksum update, see packageRules note",
+      "managerFilePatterns": ["\\.nomad\\.hcl$"],
+      "matchStrings": [
+        "github\\.com/keycloak/keycloak/releases/download/(?<currentValue>[0-9.]+)/keycloak-"
+      ],
+      "depNameTemplate": "keycloak/keycloak",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "description": "Lidarr release tarball, checksum-pinned in an artifact block - PRs from this manager need a manual checksum update, see packageRules note",
+      "managerFilePatterns": ["\\.nomad\\.hcl$"],
+      "matchStrings": [
+        "github\\.com/Lidarr/Lidarr/releases/download/v(?<currentValue>[0-9.]+)/Lidarr\\."
+      ],
+      "depNameTemplate": "Lidarr/Lidarr",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v?(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "description": "slskd release zip, checksum-pinned in an artifact block - PRs from this manager need a manual checksum update, see packageRules note",
+      "managerFilePatterns": ["\\.nomad\\.hcl$"],
+      "matchStrings": [
+        "github\\.com/slskd/slskd/releases/download/(?<currentValue>[0-9.]+)/slskd-"
+      ],
+      "depNameTemplate": "slskd/slskd",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "description": "Semaphore release tarball, checksum-pinned in the semaphore job's bootstrap script (not a native artifact block) - PRs from this manager need a manual checksum update, see packageRules note",
+      "managerFilePatterns": ["\\.nomad\\.hcl$"],
+      "matchStrings": [
+        "github\\.com/semaphoreui/semaphore/releases/download/v(?<currentValue>[0-9.]+)/semaphore_"
+      ],
+      "depNameTemplate": "semaphoreui/semaphore",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v?(?<version>.*)$"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchDepNames": ["keycloak/keycloak", "Lidarr/Lidarr", "slskd/slskd", "semaphoreui/semaphore"],
+      "prBodyNotes": [
+        "This manager only tracks the release version - it can't recompute the sha256 checksum the job spec's `artifact`/bootstrap script verifies against. Do **not** merge this PR as-is: use it as a signal that a release exists, then update the download URL and checksum by hand (download the new release, compute its sha256, update both in the `.nomad.hcl` file), same as past version bumps recorded in `CHANGELOG.md`."
+      ]
+    }
+  ]
+}

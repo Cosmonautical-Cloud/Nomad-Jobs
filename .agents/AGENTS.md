@@ -197,13 +197,22 @@ moving to Consul KV (`keycloak/BOOTSTRAP_ADMIN_PASSWORD`, matching
 
 ## Terraform import workflow
 
-A job already running when brought under Terraform needs `terraform import
-nomad_job.<id> <id>` before the first `apply`, and the first `plan` after
-import must be a true no-op — verified via the Nomad HTTP API's
-`/v1/jobs/parse` + `/v1/job/<id>/plan` directly against the live cluster
-before trusting a spec, not just by inspecting the HCL. See README's
-"Bringing an already-running job under Terraform" for the exact commands for
-the five nextcloud jobs.
+The textbook-safe way to bring an already-running job under Terraform is
+`terraform import nomad_job.<id> <id>` before the first `apply`, with the
+first `plan` after import verified as a true no-op via the Nomad HTTP
+API's `/v1/jobs/parse` + `/v1/job/<id>/plan` against the live cluster, not
+just by inspecting the HCL.
+
+**This repo's first three commits skipped that step** — Semaphore ran
+`apply` directly, no import first (see README's "How these ended up under
+Terraform" for the full story). It worked for 26 of 27 jobs because
+re-registering an already-running, unchanged job spec is a no-op for
+Nomad's scheduler. It did *not* work for `guacamole`, which turned out to
+have never actually been running — its first `apply` was a genuine
+first-time schedule attempt that hit a resource ceiling. Treat that as the
+cautionary tale, not the template: for any job newly migrated from the
+legacy repo, still do the import-first workflow rather than assuming a
+bare `apply` will be forgiving.
 
 ## Adding a new job — checklist
 
@@ -216,9 +225,10 @@ the five nextcloud jobs.
    useful if it's actually complete, so treat a new job dir without a
    corresponding list entry as an incomplete PR, same as one missing a
    README.
-4. If it's already running (migrated from the legacy repo), add its
-   `terraform import` line to both this file's and `README.md`'s import
-   command lists.
+4. If it's already running (migrated from the legacy repo), `terraform
+   import nomad_job.<id> <id>` and verify a true no-op `plan` before ever
+   letting Semaphore `apply` — see "Terraform import workflow" below for
+   why this matters more than it might seem.
 
 ## Don't
 

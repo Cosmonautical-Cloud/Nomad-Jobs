@@ -38,7 +38,7 @@ datacenter: [`Jellify/Nomad-Jobs`](https://github.com/Jellify-Music/Nomad-Jobs)
 - [`openldap`](openldap)
 - [`deemix`](deemix)
 - [`dispatcharr`](dispatcharr)
-- [`guacamole`](guacamole)
+- [`guacamole`](guacamole) — not currently deployed, see its README
 - [`jellyfin`](jellyfin)
 - [`keycloak`](keycloak)
 - [`lidarr`](lidarr)
@@ -116,9 +116,9 @@ datacenter: [`Jellify/Nomad-Jobs`](https://github.com/Jellify-Music/Nomad-Jobs)
 ```
 
 As of 2026-09-30 this covers every active job that was in the legacy
-`nomad-jobs` repo — see "Bringing an already-running job under Terraform"
-below, none of them are `terraform import`ed yet, so the legacy repo is
-still the deployed source of truth for now.
+`nomad-jobs` repo, and this repo's Terraform state now reflects all of
+them — see "How these ended up under Terraform" below for how that
+happened without a manual `terraform import` step.
 
 This is a single root module — every job is one `nomad_job` resource in the
 same `main.tf`, sharing one Consul-backed state, and Semaphore only needs one
@@ -193,69 +193,55 @@ configure. Because state is genuinely shared cluster-wide, this repo's
 backend `path` (`nomad-jobs-cosmonautical`) is deliberately distinct from
 the jellify repo's (`nomad-jobs`) — see `versions.tf`.
 
-## Bringing an already-running job under Terraform
+## How these ended up under Terraform
 
 Every job in this repo was already registered and running (real user data —
 Nextcloud's Postgres/Redis-backed instance, the shared Postgres/Redis/
 SeaweedFS infra tier, the cluster's own ingress) before its directory
-existed here, having been deployed by hand against the cluster's HTTP API
-from the legacy `nomad-jobs` repo. Applying any of their configs for the
-first time must not re-trigger a deploy. Import the existing job into state
-instead of creating it fresh, then confirm a plan is a true no-op before
-ever running apply:
+existed here, having been hand-registered against the cluster's HTTP API
+from the legacy `nomad-jobs` repo. The textbook-safe way to bring an
+already-running job under Terraform is `terraform import nomad_job.<id>
+<id>` before the first `apply`, confirming `plan` reads as a true no-op
+first.
+
+**That's not what happened here.** Semaphore's Terraform App ran `plan` +
+(user-approved) `apply` directly on each of this repo's first three
+commits, with no `terraform import` step at all — confirmed after the fact
+by reading the state straight out of Consul (`nomad-jobs-cosmonautical`
+key): all resources this repo defines are present. It worked out fine for
+26 of the 27 jobs it covered, because the Nomad provider's `nomad_job`
+resource registering a job ID that already exists just re-registers it —
+Nomad treats that as a normal deployment, and since the copied `.nomad.hcl`
+content was unchanged from what was already running, there was nothing for
+the scheduler to actually change, so no new allocations were created (spot
+checked on `semaphore` — same allocation ID before and after).
+
+**`guacamole` was the exception**, and shows why `import`-first is still
+the more careful approach in general: its spec had apparently never
+actually been successfully registered before (unlike the other jobs here,
+which were all genuinely live), so its `apply` triggered a real first-time
+scheduling attempt — which failed. Its 3 tasks together needed more CPU
+than any single one of the three cosmonautical hosts had free at that
+moment (all 3 were near capacity from the other jobs in the same batch
+starting up together), so it got stuck blocked/unscheduled. It's been
+pulled back out of `main.tf` (see its own README) rather than left in that
+state — re-add it once there's a specific reason to test it, ideally with
+some free headroom confirmed first.
+
+**For any future job brought in from the legacy repo**, still prefer the
+careful path — `terraform import` then a verified no-op `plan` — rather
+than assuming a bare `apply` will be as forgiving as it was here:
 
 ```sh
-terraform init
-terraform import nomad_job.nextcloud nextcloud
-terraform import nomad_job.nextcloud-cron nextcloud-cron
-terraform import nomad_job.nextcloud-preview-generate nextcloud-preview-generate
-terraform import nomad_job.nextcloud-s3-backup nextcloud-s3-backup
-terraform import nomad_job.nextcloud-roms-scan nextcloud-roms-scan
-terraform import nomad_job.postgres postgres
-terraform import nomad_job.postgres-backup postgres-backup
-terraform import nomad_job.redis redis
-terraform import nomad_job.traefik traefik
-terraform import nomad_job.seaweedfs seaweedfs
-terraform import nomad_job.seaweedfs-filer seaweedfs-filer
-terraform import nomad_job.seaweedfs-nfs-backup seaweedfs-nfs-backup
-terraform import nomad_job.audiomuse-ai audiomuse-ai
-terraform import nomad_job.openldap openldap
-terraform import nomad_job.deemix deemix
-terraform import nomad_job.dispatcharr dispatcharr
-terraform import nomad_job.guacamole guacamole
-terraform import nomad_job.jellyfin jellyfin
-terraform import nomad_job.keycloak keycloak
-terraform import nomad_job.lidarr lidarr
-terraform import nomad_job.ollama ollama
-terraform import nomad_job.open-webui open-webui
-terraform import nomad_job.radarr radarr
-terraform import nomad_job.sabnzbd sabnzbd
-terraform import nomad_job.seerr seerr
-terraform import nomad_job.semaphore semaphore
-terraform import nomad_job.slskd slskd
-terraform import nomad_job.sonarr sonarr
+terraform import nomad_job.<job-id> <job-id>
 terraform plan   # must show "No changes" - if it doesn't, stop and diff by hand first
 ```
 
-Before importing, confirm each job is actually still registered as expected
-(`GET /v1/job/<id>` against the live cluster) — the legacy repo's copies can
-drift from what's actually deployed, and only files modified within the last
-week are worth trusting without a fresh diff (see `.agents/AGENTS.md`).
-`traefik` and `seaweedfs` are worth extra care before importing — they're
-the cluster's ingress and shared storage tier respectively, so a bad import
-(or a plan that isn't actually a no-op) has a wide blast radius if `apply`
-ever ran against it by mistake. `keycloak` and `semaphore` are also
-higher-stakes than most — auth and the CI system that will eventually
-manage this very repo.
-
-Given the number of jobs now, consider importing and verifying in a few
-batches rather than all 28 in one sitting — a mistake is easier to isolate
-and roll back that way. There's no dependency order Terraform itself
-enforces here (state is flat, one resource per job), but the shared infra
-tier (`postgres`, `redis`, `traefik`, `seaweedfs*`) is a reasonable first
-batch since almost everything else depends on it being correctly imported.
-
-Only once `plan` looks right should Semaphore (or a human) ever run `apply`.
+Confirm the job is actually still registered as expected (`GET
+/v1/job/<id>` against the live cluster) before importing — the legacy
+repo's copies can drift from what's actually running, and only files
+modified within the last week are worth trusting without a fresh diff (see
+`.agents/AGENTS.md`).
 
 ## Wiring into Semaphore
 
