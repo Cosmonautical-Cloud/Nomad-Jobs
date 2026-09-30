@@ -29,5 +29,14 @@ macOS hosts with no shared block storage underneath Postgres itself —
 automated failover here is what keeps those apps up through a host reboot or
 failure, at the cost of the added Patroni/DCS complexity.
 
-Paired with [`postgres-backup`](../postgres-backup) for periodic dumps. For
-history/rationale, see [`CHANGELOG.md`](../CHANGELOG.md).
+Paired with [`postgres-backup`](../postgres-backup) for periodic dumps.
+
+## Consul KV keys
+
+| Key | Used for |
+|---|---|
+| `postgres/PATRONI_API_PASSWORD` | Patroni's own REST API basic auth |
+| `postgres/PATRONI_SUPERUSER_PASSWORD` | Postgres superuser (`violet`) + `pg_rewind` auth |
+| `postgres/REPLICATOR_PASSWORD` | Streaming replication user |
+
+For history/rationale, see [`CHANGELOG.md`](../CHANGELOG.md).

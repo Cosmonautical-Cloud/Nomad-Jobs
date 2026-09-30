@@ -45,3 +45,67 @@ resource "nomad_job" "seaweedfs-filer" {
 resource "nomad_job" "seaweedfs-nfs-backup" {
   jobspec = file("${path.module}/seaweedfs-nfs-backup/seaweedfs-nfs-backup.nomad.hcl")
 }
+
+resource "nomad_job" "audiomuse-ai" {
+  jobspec = file("${path.module}/audiomuse-ai/audiomuse-ai.nomad.hcl")
+}
+
+resource "nomad_job" "openldap" {
+  jobspec = file("${path.module}/openldap/openldap.nomad.hcl")
+}
+
+resource "nomad_job" "deemix" {
+  jobspec = file("${path.module}/deemix/deemix.nomad.hcl")
+}
+
+resource "nomad_job" "dispatcharr" {
+  jobspec = file("${path.module}/dispatcharr/dispatcharr.nomad.hcl")
+}
+
+resource "nomad_job" "guacamole" {
+  jobspec = file("${path.module}/guacamole/guacamole.nomad.hcl")
+}
+
+resource "nomad_job" "jellyfin" {
+  jobspec = file("${path.module}/jellyfin/jellyfin.nomad.hcl")
+}
+
+resource "nomad_job" "keycloak" {
+  jobspec = file("${path.module}/keycloak/keycloak.nomad.hcl")
+}
+
+resource "nomad_job" "lidarr" {
+  jobspec = file("${path.module}/lidarr/lidarr.nomad.hcl")
+}
+
+resource "nomad_job" "ollama" {
+  jobspec = file("${path.module}/ollama/ollama.nomad.hcl")
+}
+
+resource "nomad_job" "open-webui" {
+  jobspec = file("${path.module}/open-webui/open-webui.nomad.hcl")
+}
+
+resource "nomad_job" "radarr" {
+  jobspec = file("${path.module}/radarr/radarr.nomad.hcl")
+}
+
+resource "nomad_job" "sabnzbd" {
+  jobspec = file("${path.module}/sabnzbd/sabnzbd.nomad.hcl")
+}
+
+resource "nomad_job" "seerr" {
+  jobspec = file("${path.module}/seerr/seerr.nomad.hcl")
+}
+
+resource "nomad_job" "semaphore" {
+  jobspec = file("${path.module}/semaphore/semaphore.nomad.hcl")
+}
+
+resource "nomad_job" "slskd" {
+  jobspec = file("${path.module}/slskd/slskd.nomad.hcl")
+}
+
+resource "nomad_job" "sonarr" {
+  jobspec = file("${path.module}/sonarr/sonarr.nomad.hcl")
+}

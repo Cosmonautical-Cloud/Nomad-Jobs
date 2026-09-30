@@ -9,4 +9,11 @@ secrets (`nextcloud/DB_PASSWORD`, `redis/PASSWORD`) as the main
 details, and `.agents/AGENTS.md` for why this job's schedule is staggered
 against its four siblings.
 
+## Consul KV keys
+
+| Key | Used for |
+|---|---|
+| `nextcloud/DB_PASSWORD` | Postgres role password |
+| `redis/PASSWORD` | Redis auth |
+
 For history/rationale, see [`CHANGELOG.md`](../CHANGELOG.md).

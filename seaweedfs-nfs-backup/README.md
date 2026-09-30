@@ -12,4 +12,8 @@ high-churn, low-value paths not worth the continuous backup I/O.
 see root README), but the legacy repo's source file was named
 `seaweedfs-backup.nomad.ncl`. Copied over renamed, no content changes.
 
+## Consul KV keys
+
+None — no `template`/`{{ key ... }}` references in this job's spec.
+
 For history/rationale, see [`CHANGELOG.md`](../CHANGELOG.md).

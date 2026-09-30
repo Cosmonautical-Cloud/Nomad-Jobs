@@ -35,4 +35,11 @@ Notable pieces:
   Postgres node is currently leader, gated by [`postgres`](../postgres)'s
   `/primary`-checked Consul service tags.
 
+## Consul KV keys
+
+| Key | Used for |
+|---|---|
+| `traefik/CF_DNS_API_TOKEN` | Cloudflare DNS-01 ACME challenge (`cf-dns` resolver) |
+| `unifi/NOMAD_USER_PASSWORD` | UniFi controller login, for `update-port-forward`'s rule updates |
+
 For history/rationale, see [`CHANGELOG.md`](../CHANGELOG.md).

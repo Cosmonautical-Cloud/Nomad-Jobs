@@ -29,4 +29,12 @@ on the primary's.
 
 Used by [`seaweedfs-filer`](../seaweedfs-filer) as its filer metadata store
 and by `nextcloud`'s app-level caching — see each consumer's README for how
-it's wired in. For history/rationale, see [`CHANGELOG.md`](../CHANGELOG.md).
+it's wired in.
+
+## Consul KV keys
+
+| Key | Used for |
+|---|---|
+| `redis/PASSWORD` | `requirepass`/`masterauth`, shared across primary/replica/sentinel |
+
+For history/rationale, see [`CHANGELOG.md`](../CHANGELOG.md).

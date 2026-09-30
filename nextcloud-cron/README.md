@@ -9,4 +9,11 @@ version, and same Consul KV secrets (`nextcloud/DB_PASSWORD`,
 job's README for the shared app details, and `.agents/AGENTS.md` for why
 this job's schedule is staggered against its four siblings.
 
+## Consul KV keys
+
+| Key | Used for |
+|---|---|
+| `nextcloud/DB_PASSWORD` | Postgres role password |
+| `redis/PASSWORD` | Redis auth |
+
 For history/rationale, see [`CHANGELOG.md`](../CHANGELOG.md).

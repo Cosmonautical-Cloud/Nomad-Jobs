@@ -29,5 +29,17 @@ KV secrets, and all pin the same Nextcloud release for consistency across
 the app's own code and its CLI (`occ`) tooling — see
 `.agents/AGENTS.md` for the full Consul KV convention.
 
+## Consul KV keys
+
+| Key | Used for |
+|---|---|
+| `nextcloud/ADMIN_PASSWORD` | Initial admin account password (`occ maintenance:install`) |
+| `nextcloud/DB_PASSWORD` | Postgres role password |
+| `redis/PASSWORD` | Redis auth |
+| `smtp/SERVER` | Outbound mail host |
+| `smtp/PORT` | Outbound mail port |
+| `smtp/USERNAME` | Outbound mail username |
+| `smtp/PASSWORD` | Outbound mail password |
+
 For history/rationale (config decisions, incidents, fixes), see
 [`CHANGELOG.md`](../CHANGELOG.md).

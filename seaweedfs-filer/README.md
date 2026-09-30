@@ -16,4 +16,12 @@ replication target for SQLite-backed jobs elsewhere in the cluster, not as
 general-purpose S3 storage (that's what `nextcloud-s3-backup`'s B2 bucket
 and the dedicated `s3/*` Consul KV secrets are for).
 
+## Consul KV keys
+
+| Key | Used for |
+|---|---|
+| `redis/PASSWORD` | Sentinel-backed filer metadata store auth |
+| `seaweedfs-s3/ACCESS_KEY` | S3 gateway's `litestream` identity access key |
+| `seaweedfs-s3/SECRET_KEY` | S3 gateway's `litestream` identity secret key |
+
 For history/rationale, see [`CHANGELOG.md`](../CHANGELOG.md).

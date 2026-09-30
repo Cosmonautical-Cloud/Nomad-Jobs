@@ -13,4 +13,12 @@ Uses its own Consul KV secrets under `s3/` (`s3/KEY_ID`,
 `redis/*` keys the other four nextcloud jobs share, since it talks to S3
 directly and never touches Postgres/Redis.
 
+## Consul KV keys
+
+| Key | Used for |
+|---|---|
+| `s3/KEY_ID` | B2-compatible S3 access key ID |
+| `s3/APPLICATION_KEY` | B2-compatible S3 secret key |
+| `s3/ENDPOINT` | B2-compatible S3 endpoint URL |
+
 For history/rationale, see [`CHANGELOG.md`](../CHANGELOG.md).

@@ -10,6 +10,42 @@ repo made.
 
 Newest entries first, grouped by job.
 
+## audiomuse-ai / openldap / deemix / dispatcharr / guacamole / jellyfin / keycloak / lidarr / ollama / open-webui / radarr / sabnzbd / seerr / semaphore / slskd / sonarr
+
+### 2026-09-30
+
+- **Brought under Terraform**, migrated unmodified from the legacy
+  `nomad-jobs` repo. This is the rest of the cluster's active jobs — with
+  this batch plus the two prior ones (nextcloud stack, core infra tier),
+  every job that was in the legacy repo is now mirrored here (28 total).
+  The legacy repo remains the deployed source of truth until each job is
+  actually `terraform import`ed (none are yet).
+  - `auth.nomad.hcl` → directory/file renamed to `openldap` to match its
+    actual job ID (`job "openldap"`) — same situation as
+    `seaweedfs-nfs-backup` from the prior batch, the legacy filename didn't
+    match its own job ID. The `auth.cosmonautical.cloud` hostname actually
+    belongs to `keycloak`, not this job.
+  - `lidarr.nomad`, `radarr.nomad`, `sabnzbd.nomad`, `slskd.nomad`,
+    `sonarr.nomad` → renamed to `.nomad.hcl` for extension consistency;
+    content unchanged.
+  - **`jellyfin`, `open-webui`, and `seerr` all run as cosmonautical jobs
+    but serve `*.jellify.app` domains** — not a mistake, `traefik` is a
+    single cluster-wide ingress (see its README) and domain names follow
+    the app, not the datacenter it happens to run in.
+  - **Security fix (the one deliberate deviation from "migrate unmodified"
+    in this repo)**: `keycloak.nomad.hcl` had `KEYCLOAK_ADMIN_PASSWORD =
+    "changeme"` hardcoded in plaintext in its `env` block — the only literal
+    secret found anywhere in this repo (confirmed via a full-repo scan,
+    see `.agents/AGENTS.md`'s "This repo is public" section), and this repo
+    is public. Found before push, fixed before push: wired to the
+    pre-existing Consul KV key `keycloak/BOOTSTRAP_ADMIN_PASSWORD` via
+    `template` instead, same pattern as every other credential here.
+  - All sixteen were already registered/running before this migration —
+    each needs `terraform import` before the first `apply` (see README's
+    "Bringing an already-running job under Terraform"). `keycloak` and
+    `semaphore` carry above-average blast radius (auth; the eventual CI
+    system for this repo) if an import or plan goes wrong.
+
 ## postgres / postgres-backup / redis / traefik / seaweedfs / seaweedfs-filer / seaweedfs-nfs-backup
 
 ### 2026-09-30

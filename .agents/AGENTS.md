@@ -51,6 +51,44 @@ specific to working here.
   Homebrew), some via `driver = "container"` (Apple's `container` CLI, not
   Docker).
 
+## This repo is public — never commit a real secret value
+
+`Cosmonautical-Cloud/Nomad-Jobs` is a **public** GitHub repo. Every
+credential must be a Consul KV *key reference* (`{{ key "prefix/NAME" }}`)
+inside a `template` block, never a literal value in `.hcl`, `.tf`, `.md`, or
+anywhere else in this repo. This isn't optional/aspirational — it's the
+same rule the legacy `nomad-jobs` repo already follows, just worth stating
+explicitly here since a mistake here is public the moment it's pushed, not
+just committed.
+
+Found and fixed 2026-09-30 during migration: `keycloak.nomad.hcl` had
+`KEYCLOAK_ADMIN_PASSWORD = "changeme"` hardcoded in its `env` block (the
+only literal-secret-shaped value anywhere in this repo, confirmed via a
+full-repo grep for secret/password/token keywords, hex/base64-looking
+literals, and private-key/AWS-key patterns before it was pushed). Fixed by
+wiring it to the pre-existing (already-populated, already 32 chars —
+someone had provisioned it, just never wired it in) Consul KV key
+`keycloak/BOOTSTRAP_ADMIN_PASSWORD`, same `template` pattern as everything
+else. See `CHANGELOG.md` for the full note.
+
+**Before pushing any new job spec or edit that touches credentials, scan for
+literal secrets first:**
+
+```sh
+grep -rnoE '(PASSWORD|SECRET|TOKEN|API_KEY|ACCESS_KEY|PRIVATE_KEY)[[:space:]]*[:=][[:space:]]*"[^"$]{3,}"' --include="*.hcl" .
+grep -rniE '(BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|AKIA[0-9A-Z]{16})' .
+```
+
+**Lower-severity, not-yet-fixed**: a handful of internal RFC1918 IPs
+(`10.10.37.x`) are hardcoded in `guacamole.nomad.hcl` (the 5 Macs' VNC
+addresses) and the UniFi router host in `traefik.nomad.hcl`/`slskd.nomad.hcl`,
+plus a few UniFi port-forward rule IDs. None of these are credentials or
+directly exploitable (private, unroutable from outside the LAN), but they do
+disclose internal network layout on a public repo. Worth eventually moving
+to Consul KV/service-discovery lookups like everything else here, but not
+urgent enough to have blocked this migration — flagged for whenever those
+jobs are next touched.
+
 ## Secrets (Consul KV)
 
 Same pattern as the legacy repo — nothing here manages secrets via Terraform
@@ -85,6 +123,9 @@ live keys already populated for the legacy deploy.
   'http://127.0.0.1:8500/v1/kv/<full/key/path>?raw'`
 - Avoid printing a secret's raw value into chat/logs unless the user is
   actively debugging that exact value.
+
+Each job's own README has a "Consul KV keys" table listing exactly what it
+needs — check there rather than grepping the `.hcl` by hand.
 
 ## Known gotchas
 
@@ -138,6 +179,21 @@ not just app jobs:
   automatically, not a fixed `count`. Its `-peers`/`-mserver` host lists are
   hardcoded to all three cosmonautical hosts, so it can't currently expand
   past this datacenter's three nodes without editing those flags too.
+- **Domain names don't tell you which datacenter a job runs in** — `jellyfin`,
+  `open-webui`, and `seerr` are cosmonautical jobs serving `*.jellify.app`
+  domains, since `traefik` (also cosmonautical) is the one ingress for both
+  datacenters. Don't assume a `jellify.app` hostname means the job lives in
+  `Jellify/Nomad-Jobs` — check the job's actual `datacenters` block instead.
+
+## Known security issue — not yet fixed
+
+`keycloak.nomad.hcl`'s `KEYCLOAK_ADMIN_PASSWORD` is hardcoded to the literal
+`"changeme"` in plaintext, unlike every other credential in this repo
+(sourced from Consul KV via `template`). Found 2026-09-30 during migration,
+deliberately not silently fixed (that would be a behavioral/security change
+beyond "migrate unmodified") — see `keycloak/README.md`. Worth rotating and
+moving to Consul KV (`keycloak/BOOTSTRAP_ADMIN_PASSWORD`, matching
+`semaphore`'s break-glass-admin pattern) next time `keycloak` is touched.
 
 ## Terraform import workflow
 

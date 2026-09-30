@@ -15,4 +15,10 @@ Backs up the whole cluster (`pg_dumpall`, not a per-database `pg_dump`) since
 every app sharing the [`postgres`](../postgres) cluster (`nextcloud`,
 `open-webui`, more to come) needs to be restorable together.
 
+## Consul KV keys
+
+| Key | Used for |
+|---|---|
+| `postgres/PATRONI_SUPERUSER_PASSWORD` | `pg_dumpall` auth against the leader |
+
 For history/rationale, see [`CHANGELOG.md`](../CHANGELOG.md).

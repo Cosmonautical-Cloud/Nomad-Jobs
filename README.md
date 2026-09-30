@@ -15,6 +15,42 @@ canonical copy lives here. See this repo's sibling for the **jellify**
 datacenter: [`Jellify/Nomad-Jobs`](https://github.com/Jellify-Music/Nomad-Jobs)
 — same structure and conventions, different datacenter.
 
+## Jobs
+
+**Nextcloud stack:**
+- [`nextcloud`](nextcloud) — main service
+- [`nextcloud-cron`](nextcloud-cron)
+- [`nextcloud-preview-generate`](nextcloud-preview-generate)
+- [`nextcloud-roms-scan`](nextcloud-roms-scan)
+- [`nextcloud-s3-backup`](nextcloud-s3-backup)
+
+**Core infra:**
+- [`postgres`](postgres)
+- [`postgres-backup`](postgres-backup)
+- [`redis`](redis)
+- [`traefik`](traefik)
+- [`seaweedfs`](seaweedfs)
+- [`seaweedfs-filer`](seaweedfs-filer)
+- [`seaweedfs-nfs-backup`](seaweedfs-nfs-backup)
+
+**Apps:**
+- [`audiomuse-ai`](audiomuse-ai)
+- [`openldap`](openldap)
+- [`deemix`](deemix)
+- [`dispatcharr`](dispatcharr)
+- [`guacamole`](guacamole)
+- [`jellyfin`](jellyfin)
+- [`keycloak`](keycloak)
+- [`lidarr`](lidarr)
+- [`ollama`](ollama)
+- [`open-webui`](open-webui)
+- [`radarr`](radarr)
+- [`sabnzbd`](sabnzbd)
+- [`seerr`](seerr)
+- [`semaphore`](semaphore)
+- [`slskd`](slskd)
+- [`sonarr`](sonarr)
+
 ## Structure
 
 ```
@@ -43,9 +79,46 @@ datacenter: [`Jellify/Nomad-Jobs`](https://github.com/Jellify-Music/Nomad-Jobs)
 │   └── seaweedfs.nomad.hcl
 ├── seaweedfs-filer/
 │   └── seaweedfs-filer.nomad.hcl
-└── seaweedfs-nfs-backup/
-    └── seaweedfs-nfs-backup.nomad.hcl
+├── seaweedfs-nfs-backup/
+│   └── seaweedfs-nfs-backup.nomad.hcl
+├── audiomuse-ai/
+│   └── audiomuse-ai.nomad.hcl
+├── openldap/
+│   └── openldap.nomad.hcl
+├── deemix/
+│   └── deemix.nomad.hcl
+├── dispatcharr/
+│   └── dispatcharr.nomad.hcl
+├── guacamole/
+│   └── guacamole.nomad.hcl
+├── jellyfin/
+│   └── jellyfin.nomad.hcl
+├── keycloak/
+│   └── keycloak.nomad.hcl
+├── lidarr/
+│   └── lidarr.nomad.hcl
+├── ollama/
+│   └── ollama.nomad.hcl
+├── open-webui/
+│   └── open-webui.nomad.hcl
+├── radarr/
+│   └── radarr.nomad.hcl
+├── sabnzbd/
+│   └── sabnzbd.nomad.hcl
+├── seerr/
+│   └── seerr.nomad.hcl
+├── semaphore/
+│   └── semaphore.nomad.hcl
+├── slskd/
+│   └── slskd.nomad.hcl
+└── sonarr/
+    └── sonarr.nomad.hcl
 ```
+
+As of 2026-09-30 this covers every active job that was in the legacy
+`nomad-jobs` repo — see "Bringing an already-running job under Terraform"
+below, none of them are `terraform import`ed yet, so the legacy repo is
+still the deployed source of truth for now.
 
 This is a single root module — every job is one `nomad_job` resource in the
 same `main.tf`, sharing one Consul-backed state, and Semaphore only needs one
@@ -145,6 +218,22 @@ terraform import nomad_job.traefik traefik
 terraform import nomad_job.seaweedfs seaweedfs
 terraform import nomad_job.seaweedfs-filer seaweedfs-filer
 terraform import nomad_job.seaweedfs-nfs-backup seaweedfs-nfs-backup
+terraform import nomad_job.audiomuse-ai audiomuse-ai
+terraform import nomad_job.openldap openldap
+terraform import nomad_job.deemix deemix
+terraform import nomad_job.dispatcharr dispatcharr
+terraform import nomad_job.guacamole guacamole
+terraform import nomad_job.jellyfin jellyfin
+terraform import nomad_job.keycloak keycloak
+terraform import nomad_job.lidarr lidarr
+terraform import nomad_job.ollama ollama
+terraform import nomad_job.open-webui open-webui
+terraform import nomad_job.radarr radarr
+terraform import nomad_job.sabnzbd sabnzbd
+terraform import nomad_job.seerr seerr
+terraform import nomad_job.semaphore semaphore
+terraform import nomad_job.slskd slskd
+terraform import nomad_job.sonarr sonarr
 terraform plan   # must show "No changes" - if it doesn't, stop and diff by hand first
 ```
 
@@ -155,7 +244,16 @@ week are worth trusting without a fresh diff (see `.agents/AGENTS.md`).
 `traefik` and `seaweedfs` are worth extra care before importing — they're
 the cluster's ingress and shared storage tier respectively, so a bad import
 (or a plan that isn't actually a no-op) has a wide blast radius if `apply`
-ever ran against it by mistake.
+ever ran against it by mistake. `keycloak` and `semaphore` are also
+higher-stakes than most — auth and the CI system that will eventually
+manage this very repo.
+
+Given the number of jobs now, consider importing and verifying in a few
+batches rather than all 28 in one sitting — a mistake is easier to isolate
+and roll back that way. There's no dependency order Terraform itself
+enforces here (state is flat, one resource per job), but the shared infra
+tier (`postgres`, `redis`, `traefik`, `seaweedfs*`) is a reasonable first
+batch since almost everything else depends on it being correctly imported.
 
 Only once `plan` looks right should Semaphore (or a human) ever run `apply`.
 

@@ -17,4 +17,10 @@ each of the three cosmonautical hosts (`cassiopeia`, `taurus`,
 Paired with [`seaweedfs-filer`](../seaweedfs-filer) (the filesystem-semantics
 + S3 layer on top of this raw object store) and
 [`seaweedfs-nfs-backup`](../seaweedfs-nfs-backup) (continuous backup off the
-filer). For history/rationale, see [`CHANGELOG.md`](../CHANGELOG.md).
+filer).
+
+## Consul KV keys
+
+None — no `template`/`{{ key ... }}` references in this job's spec.
+
+For history/rationale, see [`CHANGELOG.md`](../CHANGELOG.md).
