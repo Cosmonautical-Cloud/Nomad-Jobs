@@ -45,6 +45,7 @@ datacenter: [`Jellify/Nomad-Jobs`](https://github.com/Jellify-Music/Nomad-Jobs)
 - [`ollama`](ollama)
 - [`open-webui`](open-webui)
 - [`radarr`](radarr)
+- [`romm`](romm)
 - [`sabnzbd`](sabnzbd)
 - [`seerr`](seerr)
 - [`semaphore`](semaphore)
@@ -103,6 +104,8 @@ datacenter: [`Jellify/Nomad-Jobs`](https://github.com/Jellify-Music/Nomad-Jobs)
 │   └── open-webui.nomad.hcl
 ├── radarr/
 │   └── radarr.nomad.hcl
+├── romm/
+│   └── romm.nomad.hcl
 ├── sabnzbd/
 │   └── sabnzbd.nomad.hcl
 ├── seerr/
@@ -167,6 +170,45 @@ other job in this repo (and its jellify sibling). The five jobs' schedules
 are deliberately staggered against each other and against the main service's
 own load, to avoid saturating the NAS's NFS mounts under concurrent I/O — see
 `.agents/AGENTS.md` for the schedule table and the underlying gotcha.
+
+## Backing up SQLite state with Litestream
+
+A few jobs keep state in SQLite files that change too often for a periodic
+snapshot copy to protect well — currently [`slskd`](slskd)'s
+`transfers.db`/`events.db` and [`sabnzbd`](sabnzbd)'s `history1.db`. Those
+run a `litestream replicate` task continuously streaming the file to
+[`seaweedfs-filer`](seaweedfs-filer)'s `weed s3` gateway (Consul service
+`seaweedfs-s3`), under a dedicated S3 identity named `litestream` there, and
+restore from that bucket on start if the local copy is missing. Each job
+gets its own bucket (`<job>-backups`) but shares the same
+`seaweedfs-s3/ACCESS_KEY`/`SECRET_KEY` Consul KV credentials. This is
+deliberately different from `lidarr`'s periodic `sqlite3 .backup` snapshot
+and the plain 5-minute rsync-style copy most jobs use for config/cache —
+continuous streaming replication for files that churn constantly, a
+snapshot for everything else. See each job's own README for exact file
+paths, and `seaweedfs-filer`'s README for the S3 gateway/identity setup.
+
+**Litestream does not create its own destination bucket** — found
+2026-09-30 when `slskd`/`sabnzbd`'s Terraform migration re-registered both
+jobs and replication silently failed for hours (`NoSuchBucket` errors,
+zero backups landing) because the buckets had genuinely never existed on
+`seaweedfs-filer`. Each Litestream-using job now has its own
+`ensure-backup-bucket` prestart task (`weed shell -filer=... s3.bucket.create`,
+idempotent, re-run on every deploy) so this can't silently regress again.
+Any new job adopting this pattern needs the same prestart task — see
+`slskd`'s or `sabnzbd`'s job spec for the exact snippet.
+
+## Testing
+
+[`tests/`](tests) validates every job spec and the Terraform config itself -
+`terraform fmt`/`validate`, `nomad job validate` against a throwaway local
+dev agent, and the repo's own written conventions (every job has a README,
+is linked from this file, has a matching `main.tf` resource, and has no
+hardcoded secret). Runs locally with `pytest tests/`, and in CI on every
+push/PR via [`.github/workflows/validate.yml`](.github/workflows/validate.yml)
+- see `tests/README.md` for detail. This is separate from, and faster than,
+Semaphore's `terraform plan`: it catches spec errors before a PR is even
+opened, but doesn't talk to the real cluster or Consul state.
 
 ## Changelog
 

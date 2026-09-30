@@ -86,6 +86,10 @@ resource "nomad_job" "radarr" {
   jobspec = file("${path.module}/radarr/radarr.nomad.hcl")
 }
 
+resource "nomad_job" "romm" {
+  jobspec = file("${path.module}/romm/romm.nomad.hcl")
+}
+
 resource "nomad_job" "sabnzbd" {
   jobspec = file("${path.module}/sabnzbd/sabnzbd.nomad.hcl")
 }
