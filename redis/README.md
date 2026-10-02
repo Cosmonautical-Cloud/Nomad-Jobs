@@ -27,7 +27,7 @@ is intentional, not a leftover — replicas can always re-sync fully from the
 primary, so there's no need to pay NFS latency on every replica write, only
 on the primary's.
 
-Used by [`seaweedfs-filer`](../seaweedfs-filer) as its filer metadata store
+Used by [`seaweedfs-filer`](../seaweedfs) as its filer metadata store
 and by `nextcloud`'s app-level caching — see each consumer's README for how
 it's wired in.
 

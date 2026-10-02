@@ -1,5 +1,17 @@
 # postgres
 
+The shared Postgres stack: the Patroni-managed cluster itself plus a
+periodic backup job, each its own Nomad job and Terraform resource, with
+both specs kept side by side in this folder (see the repo README's "Stack
+folders").
+
+| Job | Spec | Schedule (UTC) | What it does |
+|---|---|---|---|
+| `postgres` | [`postgres.nomad.hcl`](postgres.nomad.hcl) | service | 3-node Patroni-managed Postgres cluster |
+| `postgres-backup` | [`postgres-backup.nomad.hcl`](postgres-backup.nomad.hcl) | `0 */6 * * *` | `pg_dumpall` of the whole cluster to the NAS |
+
+## postgres
+
 A 3-node Postgres cluster (`postgresql@18` via Homebrew) managed by
 [Patroni](https://patroni.readthedocs.io/) for automated leader election and
 failover, one `patroni` group instance per host (`distinct_hosts = true`).
@@ -29,14 +41,29 @@ macOS hosts with no shared block storage underneath Postgres itself —
 automated failover here is what keeps those apps up through a host reboot or
 failure, at the cost of the added Patroni/DCS complexity.
 
-Paired with [`postgres-backup`](../postgres-backup) for periodic dumps.
+## postgres-backup
+
+Runs `pg_dumpall` against the current Postgres leader (discovered via the
+`postgres` Consul service, so it always finds the writer even after a
+failover) and writes a gzip-compressed, timestamped dump to
+`/Volumes/Cosmonautical/postgres-backups`. Prunes dumps older than 14 days,
+but only after a successful dump — a failed `pg_dumpall` leaves existing
+backups untouched rather than pruning first.
+
+Waits (polling every 10s, up to 60 attempts) for `pg_isready` against the
+discovered host before dumping, since the leader can briefly be unavailable
+during a Patroni failover.
+
+Backs up the whole cluster (`pg_dumpall`, not a per-database `pg_dump`) since
+every app sharing the cluster (`nextcloud`, `open-webui`, more to come) needs
+to be restorable together.
 
 ## Consul KV keys
 
-| Key | Used for |
-|---|---|
-| `postgres/PATRONI_API_PASSWORD` | Patroni's own REST API basic auth |
-| `postgres/PATRONI_SUPERUSER_PASSWORD` | Postgres superuser (`violet`) + `pg_rewind` auth |
-| `postgres/REPLICATOR_PASSWORD` | Streaming replication user |
+| Key | Used by | Used for |
+|---|---|---|
+| `postgres/PATRONI_API_PASSWORD` | `postgres` | Patroni's own REST API basic auth |
+| `postgres/PATRONI_SUPERUSER_PASSWORD` | `postgres`, `postgres-backup` | Postgres superuser (`violet`) + `pg_rewind` auth; `pg_dumpall` auth against the leader |
+| `postgres/REPLICATOR_PASSWORD` | `postgres` | Streaming replication user |
 
 For history/rationale, see [`CHANGELOG.md`](../CHANGELOG.md).

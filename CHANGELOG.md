@@ -12,6 +12,22 @@ Newest entries first, grouped by job.
 
 ## repo-wide
 
+### 2026-10-02
+
+- **Collapsed the five Nextcloud jobs into one `nextcloud/` stack folder**
+  (`nextcloud/<job-id>.nomad.hcl`) instead of five sibling directories at
+  the repo root, and merged their five READMEs into one
+  `nextcloud/README.md`. `main.tf`'s resource labels are unchanged — only
+  the `file()` paths moved, and the jobspec contents are byte-identical, so
+  `plan` should be a no-op. `tests/test_conventions.py` now tolerates
+  several job specs sharing one directory/README.
+- **Same collapse for `postgres/`** (`postgres` + `postgres-backup`) **and
+  `seaweedfs/`** (`seaweedfs` + `seaweedfs-filer` + `seaweedfs-nfs-backup`)
+  — documented together in the root README's new "Stack folders" section.
+  Also reworded `seaweedfs-nfs-backup`'s stale "job ID doesn't match its
+  directory/file name" note: they do match; the rename was from the legacy
+  repo's `seaweedfs-backup.nomad.ncl`.
+
 ### 2026-09-30
 
 - **All three of this repo's first commits were actually applied by

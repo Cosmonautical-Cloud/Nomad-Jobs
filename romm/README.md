@@ -27,7 +27,7 @@ on container start, so no schema-loading step is needed the way
 `guacamole`'s JDBC extension needs one.
 
 The ROM library mount (`/Volumes/ROMs`) is the same NFS-backed library
-[`nextcloud-roms-scan`](../nextcloud-roms-scan) indexes into Nextcloud.
+[`nextcloud-roms-scan`](../nextcloud) indexes into Nextcloud.
 Originally mounted read-only so RomM couldn't be a second, less-trusted
 writer into a library Nextcloud also manages — flipped to **read-write**
 2026-09-30 (see `CHANGELOG.md`) once RomM's own "add platform" UI was

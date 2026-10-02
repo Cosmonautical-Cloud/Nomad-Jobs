@@ -17,21 +17,19 @@ datacenter: [`Jellify/Nomad-Jobs`](https://github.com/Jellify-Music/Nomad-Jobs)
 
 ## Jobs
 
-**Nextcloud stack:**
-- [`nextcloud`](nextcloud) — main service
-- [`nextcloud-cron`](nextcloud-cron)
-- [`nextcloud-preview-generate`](nextcloud-preview-generate)
-- [`nextcloud-roms-scan`](nextcloud-roms-scan)
-- [`nextcloud-s3-backup`](nextcloud-s3-backup)
+**Nextcloud stack** — all in [`nextcloud`](nextcloud):
+- `nextcloud` — main service
+- `nextcloud-cron`
+- `nextcloud-preview-generate`
+- `nextcloud-roms-scan`
+- `nextcloud-s3-backup`
 
 **Core infra:**
-- [`postgres`](postgres)
-- [`postgres-backup`](postgres-backup)
+- [`postgres`](postgres) — `postgres`, `postgres-backup`
 - [`redis`](redis)
 - [`traefik`](traefik)
-- [`seaweedfs`](seaweedfs)
-- [`seaweedfs-filer`](seaweedfs-filer)
-- [`seaweedfs-nfs-backup`](seaweedfs-nfs-backup)
+- [`seaweedfs`](seaweedfs) — `seaweedfs`, `seaweedfs-filer`,
+  `seaweedfs-nfs-backup`
 
 **Apps:**
 - [`audiomuse-ai`](audiomuse-ai)
@@ -58,29 +56,22 @@ datacenter: [`Jellify/Nomad-Jobs`](https://github.com/Jellify-Music/Nomad-Jobs)
 .
 ├── main.tf                        one nomad_job resource per job, shared state
 ├── versions.tf
-├── nextcloud/
-│   └── nextcloud.nomad.hcl
-├── nextcloud-cron/
-│   └── nextcloud-cron.nomad.hcl
-├── nextcloud-preview-generate/
-│   └── nextcloud-preview-generate.nomad.hcl
-├── nextcloud-s3-backup/
-│   └── nextcloud-s3-backup.nomad.hcl
-├── nextcloud-roms-scan/
+├── nextcloud/                     stack folder: five jobs, one shared README
+│   ├── nextcloud.nomad.hcl
+│   ├── nextcloud-cron.nomad.hcl
+│   ├── nextcloud-preview-generate.nomad.hcl
+│   ├── nextcloud-s3-backup.nomad.hcl
 │   └── nextcloud-roms-scan.nomad.hcl
-├── postgres/
-│   └── postgres.nomad.hcl
-├── postgres-backup/
+├── postgres/                      stack folder: two jobs, one shared README
+│   ├── postgres.nomad.hcl
 │   └── postgres-backup.nomad.hcl
 ├── redis/
 │   └── redis.nomad.hcl
 ├── traefik/
 │   └── traefik.nomad.hcl
-├── seaweedfs/
-│   └── seaweedfs.nomad.hcl
-├── seaweedfs-filer/
-│   └── seaweedfs-filer.nomad.hcl
-├── seaweedfs-nfs-backup/
+├── seaweedfs/                     stack folder: three jobs, one shared README
+│   ├── seaweedfs.nomad.hcl
+│   ├── seaweedfs-filer.nomad.hcl
 │   └── seaweedfs-nfs-backup.nomad.hcl
 ├── audiomuse-ai/
 │   └── audiomuse-ai.nomad.hcl
@@ -150,8 +141,10 @@ embedding it as a Terraform heredoc — Nomad's own
 otherwise collide with Terraform's own `${...}` template interpolation
 inside a heredoc string.
 
-Adding a new job: create `<job>/<job>.nomad.hcl` with that job's spec, then
-add a resource block to `main.tf`:
+Adding a new job: create `<job>/<job>.nomad.hcl` with that job's spec (or
+drop it into an existing stack folder like `nextcloud/<job>.nomad.hcl` —
+see "Stack folders" below),
+then add a resource block to `main.tf`:
 
 ```hcl
 resource "nomad_job" "<job-id>" {
@@ -159,14 +152,26 @@ resource "nomad_job" "<job-id>" {
 }
 ```
 
-## Why five directories for one app
+## Stack folders
 
-`nextcloud`, `nextcloud-cron`, `nextcloud-preview-generate`,
-`nextcloud-s3-backup`, and `nextcloud-roms-scan` are all part of the same
-Nextcloud deployment (same app config, same Postgres/Redis/S3 backing
-services), but each is registered as its own Nomad job, so each gets its own
-top-level directory here — one directory per job ID, same rule as every
-other job in this repo (and its jellify sibling). The five jobs' schedules
+Most directories here hold exactly one job. The exception is a **stack
+folder**: one app split across several Nomad jobs — a main job plus
+siblings that only exist to serve it, named after it. Each job is still
+registered separately, with its own `main.tf` resource and `.nomad.hcl`
+file, but all of a stack's specs sit side by side in one folder
+(`<stack>/<job-id>.nomad.hcl`) sharing one README, so the stack reads as one
+unit:
+
+- [`nextcloud/`](nextcloud) — `nextcloud`, `nextcloud-cron`,
+  `nextcloud-preview-generate`, `nextcloud-roms-scan`, `nextcloud-s3-backup`
+  (same app config, same Postgres/Redis/S3 backing services)
+- [`postgres/`](postgres) — `postgres`, `postgres-backup`
+- [`seaweedfs/`](seaweedfs) — `seaweedfs`, `seaweedfs-filer`,
+  `seaweedfs-nfs-backup`
+
+Related-but-independent apps (e.g. `ollama`/`open-webui`, or the \*arr and
+download apps) stay in their own directories — a stack folder is for one
+app's jobs, not a category. The five jobs' schedules
 are deliberately staggered against each other and against the main service's
 own load, to avoid saturating the NAS's NFS mounts under concurrent I/O — see
 `.agents/AGENTS.md` for the schedule table and the underlying gotcha.
@@ -177,7 +182,7 @@ A few jobs keep state in SQLite files that change too often for a periodic
 snapshot copy to protect well — currently [`slskd`](slskd)'s
 `transfers.db`/`events.db` and [`sabnzbd`](sabnzbd)'s `history1.db`. Those
 run a `litestream replicate` task continuously streaming the file to
-[`seaweedfs-filer`](seaweedfs-filer)'s `weed s3` gateway (Consul service
+[`seaweedfs-filer`](seaweedfs)'s `weed s3` gateway (Consul service
 `seaweedfs-s3`), under a dedicated S3 identity named `litestream` there, and
 restore from that bucket on start if the local copy is missing. Each job
 gets its own bucket (`<job>-backups`) but shares the same
@@ -186,7 +191,7 @@ deliberately different from `lidarr`'s periodic `sqlite3 .backup` snapshot
 and the plain 5-minute rsync-style copy most jobs use for config/cache —
 continuous streaming replication for files that churn constantly, a
 snapshot for everything else. See each job's own README for exact file
-paths, and `seaweedfs-filer`'s README for the S3 gateway/identity setup.
+paths, and [`seaweedfs`](seaweedfs)'s README for the S3 gateway/identity setup.
 
 **Litestream does not create its own destination bucket** — found
 2026-09-30 when `slskd`/`sabnzbd`'s Terraform migration re-registered both

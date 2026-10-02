@@ -11,7 +11,7 @@ Persistence is layered: `slskd.yml` config and a few cache/db files sync
 to/from `/Volumes/Cosmonautical/slskd/persistent` every 5 minutes (same
 pattern as `sabnzbd`'s config), while `transfers.db` and `events.db`
 specifically are continuously replicated via Litestream to the
-`slskd-backups` bucket on [`seaweedfs-filer`](../seaweedfs-filer)'s S3
+`slskd-backups` bucket on [`seaweedfs-filer`](../seaweedfs)'s S3
 gateway and restored from there on start — same reasoning as `sabnzbd`'s
 history DB: these two files change too often for a 5-minute snapshot to be
 a good backup strategy.

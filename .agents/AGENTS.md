@@ -292,7 +292,10 @@ bare `apply` will be forgiving.
 ## Adding a new job — checklist
 
 1. `<job>/<job>.nomad.hcl` + a `nomad_job` resource in `main.tf` (README's
-   "Adding a new job" has the exact snippet).
+   "Adding a new job" has the exact snippet). A job belonging to a grouped
+   stack goes in that stack's folder instead, e.g. `nextcloud/<job>.nomad.hcl`
+   (stacks: `nextcloud/`, `postgres/`, `seaweedfs/` — see README's "Stack
+   folders"), and is documented in the stack's shared README.
 2. `<job>/README.md` — what it runs, notable choices, a "Consul KV keys"
    table (or an explicit "None" line if it needs none).
 3. **Add it to the linked job list at the top of `README.md`'s "Jobs"

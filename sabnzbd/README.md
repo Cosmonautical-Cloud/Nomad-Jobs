@@ -7,7 +7,7 @@ restore-on-start pattern as `lidarr`'s config.
 
 Its history database (`admin/history1.db`) is continuously replicated via
 [Litestream](https://litestream.io/) to the `sabnzbd-backups` bucket on
-[`seaweedfs-filer`](../seaweedfs-filer)'s S3 gateway, and restored from
+[`seaweedfs-filer`](../seaweedfs)'s S3 gateway, and restored from
 there on start if missing locally — same pattern as [`slskd`](../slskd)'s
 `transfers.db`/`events.db`. This is a different, lighter-weight persistence
 strategy than `lidarr`'s periodic `sqlite3 .backup` copy: continuous

@@ -22,8 +22,11 @@ NO_MAIN_TF_RESOURCE_EXEMPT: dict[str, str] = {
     ),
 }
 
+# A directory usually holds one job, but a stack folder (e.g. `nextcloud/`)
+# holds several job specs side by side sharing one README.
 JOB_HCL_FILES = sorted(REPO_ROOT.glob("*/*.nomad.hcl"))
-JOB_DIRS = [p.parent for p in JOB_HCL_FILES]
+JOB_HCL_IDS = [str(p.relative_to(REPO_ROOT)) for p in JOB_HCL_FILES]
+JOB_DIRS = sorted({p.parent for p in JOB_HCL_FILES})
 JOB_DIR_IDS = [d.name for d in JOB_DIRS]
 
 
@@ -64,7 +67,7 @@ def _main_tf_resources() -> dict[str, str]:
     return {path: label for label, path in MAIN_TF_RESOURCE_RE.findall(text)}
 
 
-@pytest.mark.parametrize("hcl_path", JOB_HCL_FILES, ids=JOB_DIR_IDS)
+@pytest.mark.parametrize("hcl_path", JOB_HCL_FILES, ids=JOB_HCL_IDS)
 def test_job_wired_into_main_tf(hcl_path):
     job_dir_name = hcl_path.parent.name
     if job_dir_name in NO_MAIN_TF_RESOURCE_EXEMPT:
@@ -100,7 +103,7 @@ SECRET_LITERAL_RE = re.compile(
 )
 
 
-@pytest.mark.parametrize("hcl_path", JOB_HCL_FILES, ids=JOB_DIR_IDS)
+@pytest.mark.parametrize("hcl_path", JOB_HCL_FILES, ids=JOB_HCL_IDS)
 def test_no_hardcoded_secrets(hcl_path):
     """Both Nomad-Jobs repos are public - a credential must be a Consul KV
     reference (`{{ key "..." }}`), never a literal value in the job spec.
@@ -122,7 +125,7 @@ def test_no_hardcoded_secrets(hcl_path):
 CONSUL_KEY_RE = re.compile(r'\{\{\s*key\s+"([^"]+)"\s*\}\}')
 
 
-@pytest.mark.parametrize("hcl_path", JOB_HCL_FILES, ids=JOB_DIR_IDS)
+@pytest.mark.parametrize("hcl_path", JOB_HCL_FILES, ids=JOB_HCL_IDS)
 def test_consul_kv_keys_documented_in_readme(hcl_path):
     """Every `{{ key "..." }}` reference should be documented in that job's
     README (its 'Consul KV keys' table, by convention) - just needs to appear
