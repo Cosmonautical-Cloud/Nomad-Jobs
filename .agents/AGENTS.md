@@ -216,6 +216,8 @@ name and hardcodes the verb, use `Cosmonautical`. Current state:
 | `open-webui` | `OAUTH_PROVIDER_NAME` (name only) | Continue with Cosmonautical (verb hardcoded upstream) |
 | `guacamole` | n/a: redirects straight to Keycloak, no button | — |
 | jellify's `penpot` | `PENPOT_OIDC_NAME` (full label) | Sign in with Cosmonautical |
+| `home-assistant` (Node-RED) | `adminAuth.strategy.label` in the managed `settings.js` (full label) | Sign in with Cosmonautical |
+| `home-assistant` (Home Assistant) | n/a: LDAP via a `command_line` auth provider named `Cosmonautical`, not SSO | — |
 
 Keep a provider's internal ID (for example Semaphore's `keycloak` key, which
 appears in its redirect URL) as-is. Only change the label people see.

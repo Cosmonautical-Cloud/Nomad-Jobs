@@ -56,6 +56,34 @@ Newest entries first, grouped by job.
   PRs are a signal only, they can't recompute the sha256 a human still has
   to update by hand.
 
+## home-assistant
+
+### 2026-10-05
+
+- **New job: Home Assistant, Node-RED, Mosquitto and zigbee2mqtt.** These
+  run as three groups in one job, so they deploy together but can be
+  scheduled on separate nodes. Startup order is enforced with `wait-for-*`
+  prestarts that poll Consul health, because Nomad has no cross-group
+  dependency ordering.
+- **zigbee2mqtt runs under `raw_exec`, not a container.** Apple's
+  `container` VMs have no USB passthrough. It's pinned to `iot` hosts that
+  publish `meta.zigbee_adapter`/`zigbee_adapter_type`, and uses Homebrew
+  `node@24` because Homebrew's unversioned `node` (26.5) is past
+  zigbee2mqtt 2.14's supported range (<=26.2).
+- **Config files go onto NFS from raw_exec prestarts.** The container
+  driver doesn't mount Nomad's `/local`, `/secrets` or `/alloc` into the
+  VM (checked with `container inspect` on romm), so container tasks only
+  receive env vars. Mosquitto's password file is built inside the container
+  from env.
+- **Home Assistant LDAP login is a `command_line` provider using vendored
+  `ldap3`.** The 2026.9.4 image has no `ldapsearch`, its curl is built
+  without LDAP, and `ldap3` isn't installed. That was checked by running
+  the image.
+- **Node-RED SSO requires `Admins` in the ID token's `groups` claim.** The
+  check needs the raw ID token, so the `verify` callback takes five
+  arguments: `passport-openidconnect` chooses what to pass by the callback's
+  arity, and Node-RED 5 keeps that arity when it wraps `verify`.
+
 ## romm
 
 ### 2026-09-30
