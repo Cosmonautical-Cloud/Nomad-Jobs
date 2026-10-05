@@ -202,6 +202,24 @@ Each job's own README should have a "Nomad Variables" table (parallel to
 its "Consul KV keys" one) listing exactly what it needs — see `romm`'s
 README for the first example of this.
 
+## SSO button label — always "Sign in with Cosmonautical"
+
+Wherever an app offers Keycloak SSO, its login button should read **"Sign
+in with Cosmonautical"**: never "Keycloak", "OIDC", or "OpenID". Use the
+exact text when the app takes a full label. When it only takes a provider
+name and hardcodes the verb, use `Cosmonautical`. Current state:
+
+| App | Setting | Renders as |
+|---|---|---|
+| `semaphore` | `oidc_providers.keycloak.display_name` (full label) | Sign in with Cosmonautical |
+| `romm` | `OIDC_PROVIDER` Nomad Variable (name only) | Login with Cosmonautical (verb hardcoded upstream) |
+| `open-webui` | `OAUTH_PROVIDER_NAME` (name only) | Continue with Cosmonautical (verb hardcoded upstream) |
+| `guacamole` | n/a: redirects straight to Keycloak, no button | — |
+| jellify's `penpot` | `PENPOT_OIDC_NAME` (full label) | Sign in with Cosmonautical |
+
+Keep a provider's internal ID (for example Semaphore's `keycloak` key, which
+appears in its redirect URL) as-is. Only change the label people see.
+
 ## Known gotchas
 
 Don't duplicate the legacy repo's gotcha list here — read

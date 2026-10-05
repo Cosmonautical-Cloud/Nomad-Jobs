@@ -61,7 +61,7 @@ job "semaphore" {
 
           "oidc_providers": {
             "keycloak": {
-              "display_name": "Sign in with Keycloak",
+              "display_name": "Sign in with Cosmonautical",
               "provider_url": "https://auth.cosmonautical.cloud/realms/cosmonautical",
               "client_id": "semaphore",
               "client_secret": "{{ key "semaphore/OIDC_CLIENT_SECRET" }}",
