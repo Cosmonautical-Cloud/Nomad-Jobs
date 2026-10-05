@@ -115,7 +115,7 @@ host, same as Consul KV):
 curl -X PUT 127.0.0.1:4646/v1/var/nomad/jobs/romm -d '{
   "Items": {
     "ROMM_BASE_URL": "https://roms.cosmonautical.cloud",
-    "OIDC_PROVIDER": "keycloak",
+    "OIDC_PROVIDER": "Cosmonautical",
     "OIDC_REDIRECT_URI": "https://roms.cosmonautical.cloud/api/oauth/openid",
     "OIDC_SERVER_APPLICATION_URL": "https://auth.cosmonautical.cloud/realms/cosmonautical"
   }
@@ -125,7 +125,7 @@ curl -X PUT 127.0.0.1:4646/v1/var/nomad/jobs/romm -d '{
 | Item | Used for |
 |---|---|
 | `ROMM_BASE_URL` | Public URL of this instance |
-| `OIDC_PROVIDER` | Label RomM shows for the SSO login option |
+| `OIDC_PROVIDER` | Provider name on the SSO button. RomM hardcodes the verb, so `Cosmonautical` renders as "Login with Cosmonautical" (see `../.agents/AGENTS.md`'s "SSO button label") |
 | `OIDC_REDIRECT_URI` | Must match the redirect URI registered on the Keycloak client |
 | `OIDC_SERVER_APPLICATION_URL` | Keycloak realm issuer URL |
 

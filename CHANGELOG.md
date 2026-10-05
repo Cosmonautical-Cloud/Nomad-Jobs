@@ -12,6 +12,15 @@ Newest entries first, grouped by job.
 
 ## repo-wide
 
+### 2026-10-05
+
+- **SSO buttons now say "Sign in with Cosmonautical."** Semaphore's
+  `display_name` changed from "Sign in with Keycloak". RomM's
+  `OIDC_PROVIDER` Nomad Variable changed from `keycloak` to `Cosmonautical`;
+  RomM hardcodes the "Login with" verb, so it reads "Login with
+  Cosmonautical". The convention is documented in `.agents/AGENTS.md`'s "SSO
+  button label".
+
 ### 2026-10-02
 
 - **Collapsed the five Nextcloud jobs into one `nextcloud/` stack folder**
