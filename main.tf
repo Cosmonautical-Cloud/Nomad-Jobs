@@ -66,6 +66,10 @@ resource "nomad_job" "guacamole" {
   jobspec = file("${path.module}/guacamole/guacamole.nomad.hcl")
 }
 
+resource "nomad_job" "home-assistant" {
+  jobspec = file("${path.module}/home-assistant/home-assistant.nomad.hcl")
+}
+
 resource "nomad_job" "jellyfin" {
   jobspec = file("${path.module}/jellyfin/jellyfin.nomad.hcl")
 }
