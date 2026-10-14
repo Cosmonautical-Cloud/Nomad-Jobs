@@ -34,6 +34,15 @@ Notable pieces:
 - **`postgres` entrypoint (`:15432`)** — TCP passthrough to whichever
   Postgres node is currently leader, gated by [`postgres`](../postgres)'s
   `/primary`-checked Consul service tags.
+- **`accessLog`** — writes only 403/404/418/999 responses to a fixed,
+  host-local path (`/opt/homebrew/var/log/traefik/access.log`, same on all
+  three hosts, independent of the per-alloc `NOMAD_ALLOC_DIR`) so it stays
+  put across host migrations. This feeds a `fail2ban` jail (`traefik-abuse`)
+  that bans an IP for 8 such responses within 10 minutes — fail2ban itself
+  and the `pf` anchor it needs are provisioned host-side via Nomadintosh,
+  not by this job, so the jail must be set up on all three hosts
+  (`cassiopeia`, `taurus`, `betelgeuse`), not just whichever currently runs
+  this alloc.
 
 ## Consul KV keys
 

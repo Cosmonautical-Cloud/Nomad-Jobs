@@ -5,6 +5,18 @@ This file is the operational context an agent needs but that doesn't belong
 in a human-facing README: cluster topology, safety rules, and gotchas
 specific to working here.
 
+## Don't add comments to `.nomad.hcl` files
+
+`CHANGELOG.md`'s intro already states this, but it's easy to default back to
+habit mid-edit: job spec files stay lean, with no inline comments explaining
+the "why" behind a value or a decision. That explanation goes in the job's
+own `README.md` (a "Notable pieces" bullet, matching the existing pattern in
+e.g. `traefik/README.md`) or in a dated `CHANGELOG.md` entry if it's a
+fix/incident, never as a `#` comment in the `.hcl` itself. Some older
+comments already in these files predate this being written down explicitly
+— don't take their presence as license to add more; fix them opportunistically
+if you're already editing that section.
+
 ## This repo vs. the others
 
 - **This repo** (`Cosmonautical-Cloud/Nomad-Jobs`) — Terraform-managed job

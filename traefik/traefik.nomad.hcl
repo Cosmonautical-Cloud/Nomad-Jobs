@@ -213,6 +213,16 @@ api:
   dashboard: true
   insecure: true
 
+accessLog:
+  filePath: "/opt/homebrew/var/log/traefik/access.log"
+  format: common
+  filters:
+    statusCodes:
+      - "403"
+      - "404"
+      - "418"
+      - "999"
+
 certificatesResolvers:
   cf-dns:
     acme:
@@ -235,6 +245,8 @@ EOT
 set -eu
 
 data_dir="$NOMAD_ALLOC_DIR/traefik-data"
+
+mkdir -p /opt/homebrew/var/log/traefik
 
 /opt/homebrew/bin/traefik --configfile="$NOMAD_TASK_DIR/traefik.yml" --log.level=INFO &
 traefik_pid=$!
