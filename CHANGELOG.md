@@ -10,6 +10,18 @@ repo made.
 
 Newest entries first, grouped by job.
 
+## traefik
+
+### 2026-10-13
+
+- **Added a dedicated `accessLog` for fail2ban.** Only 403/404/418/999
+  responses are logged, to a fixed host-local path
+  (`/opt/homebrew/var/log/traefik/access.log`) rather than anywhere under
+  `NOMAD_ALLOC_DIR`, so it survives this job migrating between hosts. Pairs
+  with a new `traefik-abuse` fail2ban jail (8 hits / 10 min ban) — the
+  jail/filter config and the `pf` anchor it needs are provisioned host-side
+  via Nomadintosh, not tracked in this repo. See `traefik/README.md`.
+
 ## repo-wide
 
 ### 2026-10-05
