@@ -92,7 +92,7 @@ bootstrap:
     - host replication replicator 127.0.0.1/32 md5
     - host all all 10.10.37.0/24 md5
     - host all all 127.0.0.1/32 md5
-    - host all all 192.168.64.0/24 md5
+    - host all all 192.168.64.0/18 md5
     - host all violet 10.10.20.177/32 md5
 
 postgresql:
@@ -117,7 +117,7 @@ postgresql:
     - host replication replicator 127.0.0.1/32 md5
     - host all all 10.10.37.0/24 md5
     - host all all 127.0.0.1/32 md5
-    - host all all 192.168.64.0/24 md5
+    - host all all 192.168.64.0/18 md5
     - host all violet 10.10.20.177/32 md5
 
 tags:
