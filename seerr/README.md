@@ -1,6 +1,6 @@
 # seerr
 
-Runs Seerr (`ghcr.io/seerr-team/seerr:v3.4.1`, container driver) — media
+Runs [Seerr](https://seerr.dev) (`ghcr.io/seerr-team/seerr:v3.5.1`, container driver) — media
 request management (Overseerr-family) — routed at `seerr.jellify.app` (see
 [`jellyfin`](../jellyfin)'s README for why). Backed by its own
 database/role on the shared [`postgres`](../postgres) cluster. Config
