@@ -12,11 +12,11 @@ job "nextcloud-s3-backup" {
       driver = "raw_exec"
 
       artifact {
-        source      = "https://downloads.rclone.org/v1.75.1/rclone-v1.75.1-osx-arm64.zip"
+        source      = "https://downloads.rclone.org/v1.75.2/rclone-v1.75.2-osx-arm64.zip"
         destination = "local/"
 
         options {
-          checksum = "sha256:c61d7a371c62bcbbe882c3423aa4b8bf63485c248dd0f692997b8f0c3f6d0c6f"
+          checksum = "sha256:610ab7d48615135dfc60b763858b11a426a0d3d1160c1bb76fb0ae6011b02edd"
         }
       }
 
@@ -38,7 +38,7 @@ EOT
 set -eu
 set -o pipefail
 
-rclone="${NOMAD_TASK_DIR}/rclone-v1.75.1-osx-arm64/rclone"
+rclone="${NOMAD_TASK_DIR}/rclone-v1.75.2-osx-arm64/rclone"
 conf="${NOMAD_SECRETS_DIR}/rclone.conf"
 remote="b2:cosmonautical-nextcloud-backups"
 src="/Volumes/Cosmonautical/nextcloud/data"
