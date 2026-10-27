@@ -1,7 +1,7 @@
 # dispatcharr
 
 Runs [Dispatcharr](https://github.com/Dispatcharr/Dispatcharr)
-(`ghcr.io/dispatcharr/dispatcharr:0.31.0-arm64`, container driver) — IPTV/EPG
+(`ghcr.io/dispatcharr/dispatcharr:0.33.0-arm64`, container driver) — IPTV/EPG
 management — as two tasks: `dispatcharr` (the web server, pinned to
 `betelgeuse.cosmonautical.cloud`, port `9191`) and `celery` (background
 worker, same image, `entrypoint.celery.sh`, 1–2 workers).
