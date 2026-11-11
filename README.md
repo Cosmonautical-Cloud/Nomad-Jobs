@@ -37,6 +37,8 @@ datacenter: [`Jellify/Nomad-Jobs`](https://github.com/Jellify-Music/Nomad-Jobs)
 - [`deemix`](deemix)
 - [`dispatcharr`](dispatcharr)
 - [`guacamole`](guacamole) — not currently deployed, see its README
+- [`home-assistant`](home-assistant) — Home Assistant, Node-RED, Mosquitto and
+  zigbee2mqtt in one job
 - [`jellyfin`](jellyfin)
 - [`keycloak`](keycloak)
 - [`lidarr`](lidarr)
@@ -83,6 +85,8 @@ datacenter: [`Jellify/Nomad-Jobs`](https://github.com/Jellify-Music/Nomad-Jobs)
 │   └── dispatcharr.nomad.hcl
 ├── guacamole/
 │   └── guacamole.nomad.hcl
+├── home-assistant/
+│   └── home-assistant.nomad.hcl
 ├── jellyfin/
 │   └── jellyfin.nomad.hcl
 ├── keycloak/
