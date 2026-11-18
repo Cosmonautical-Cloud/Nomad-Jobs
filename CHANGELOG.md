@@ -34,6 +34,12 @@ Newest entries first, grouped by job.
 
 ### 2026-11-18
 
+- **Renovate's custom managers now match the job specs.** Renovate 41+
+  treats a `managerFilePatterns` entry as a glob unless it's wrapped in
+  `/.../`, so `"\\.nomad\\.hcl$"` matched nothing: the Dependency
+  Dashboard listed only GitHub Actions and Terraform, and no image or
+  release-tarball bump was ever raised. All five managers now use
+  `"/\\.nomad\\.hcl$/"`.
 - **App upgrades.** Every checksum was recomputed from the downloaded
   release and matched the one upstream publishes (Nextcloud, rclone, Caddy,
   Keycloak).

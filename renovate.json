@@ -8,7 +8,7 @@
     {
       "customType": "regex",
       "description": "Docker images referenced directly in Nomad job specs (not a format Renovate recognizes natively)",
-      "managerFilePatterns": ["\\.nomad\\.hcl$"],
+      "managerFilePatterns": ["/\\.nomad\\.hcl$/"],
       "matchStrings": [
         "image\\s*=\\s*\"(?<depName>[^:@\"]+):(?<currentValue>[^@\"]+)(?:@(?<currentDigest>sha256:[a-f0-9]+))?\""
       ],
@@ -17,7 +17,7 @@
     {
       "customType": "regex",
       "description": "Keycloak release tarball, checksum-pinned in an artifact block - PRs from this manager need a manual checksum update, see packageRules note",
-      "managerFilePatterns": ["\\.nomad\\.hcl$"],
+      "managerFilePatterns": ["/\\.nomad\\.hcl$/"],
       "matchStrings": [
         "github\\.com/keycloak/keycloak/releases/download/(?<currentValue>[0-9.]+)/keycloak-"
       ],
@@ -28,7 +28,7 @@
     {
       "customType": "regex",
       "description": "Lidarr release tarball, checksum-pinned in an artifact block - PRs from this manager need a manual checksum update, see packageRules note",
-      "managerFilePatterns": ["\\.nomad\\.hcl$"],
+      "managerFilePatterns": ["/\\.nomad\\.hcl$/"],
       "matchStrings": [
         "github\\.com/Lidarr/Lidarr/releases/download/v(?<currentValue>[0-9.]+)/Lidarr\\."
       ],
@@ -39,7 +39,7 @@
     {
       "customType": "regex",
       "description": "slskd release zip, checksum-pinned in an artifact block - PRs from this manager need a manual checksum update, see packageRules note",
-      "managerFilePatterns": ["\\.nomad\\.hcl$"],
+      "managerFilePatterns": ["/\\.nomad\\.hcl$/"],
       "matchStrings": [
         "github\\.com/slskd/slskd/releases/download/(?<currentValue>[0-9.]+)/slskd-"
       ],
@@ -50,7 +50,7 @@
     {
       "customType": "regex",
       "description": "Semaphore release tarball, checksum-pinned in the semaphore job's bootstrap script (not a native artifact block) - PRs from this manager need a manual checksum update, see packageRules note",
-      "managerFilePatterns": ["\\.nomad\\.hcl$"],
+      "managerFilePatterns": ["/\\.nomad\\.hcl$/"],
       "matchStrings": [
         "github\\.com/semaphoreui/semaphore/releases/download/v(?<currentValue>[0-9.]+)/semaphore_"
       ],
