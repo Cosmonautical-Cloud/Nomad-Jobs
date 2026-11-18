@@ -45,15 +45,15 @@ job "keycloak" {
       driver = "raw_exec"
 
       artifact {
-        source      = "https://github.com/keycloak/keycloak/releases/download/26.7.5/keycloak-26.7.5.tar.gz"
+        source      = "https://github.com/keycloak/keycloak/releases/download/26.8.2/keycloak-26.8.2.tar.gz"
         destination = "local/"
         options {
-          checksum = "sha256:87d680d13cf4600d232ca0433a2553c57ebf03e56f7718fc0d03a1a8705497c8"
+          checksum = "sha256:dd124787283918bc597628887168333465ee2a811a389e0003569e52be7e487f"
         }
       }
 
       config {
-        command = "${NOMAD_TASK_DIR}/keycloak-26.7.5/bin/kc.sh"
+        command = "${NOMAD_TASK_DIR}/keycloak-26.8.2/bin/kc.sh"
         args = [
           "start",
           "--http-port=8180",

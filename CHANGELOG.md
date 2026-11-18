@@ -12,6 +12,30 @@ Newest entries first, grouped by job.
 
 ## repo-wide
 
+### 2026-11-18
+
+- **App upgrades.** Every checksum was recomputed from the downloaded
+  release and matched the one upstream publishes (Nextcloud, rclone, Caddy,
+  Keycloak).
+  - Nextcloud 34.0.4 → 34.0.6 (all five jobs). 35.x is a major upgrade and
+    is left for its own change.
+  - Caddy 2.11.4 → 2.11.9 and rclone 1.75.2 → 1.76.0.
+  - Keycloak 26.7.5 → 26.8.2. Nothing in the 26.8 upgrading notes applies
+    here: no custom login theme, no `multi-site` feature.
+  - slskd 0.24.1 → 0.26.2. 0.25 moved the `global`/`groups`/`integration`
+    keys and 0.26 moved `permissions.file.mode`; the live `slskd.yml` sets
+    none of them.
+  - Semaphore 2.19.12 → 2.19.21, the latest patch on 2.19. 2.20.23 is the
+    first stable 2.20 (released 2026-11-10); since Semaphore deploys
+    everything else, the minor bump waits until it has had more time out.
+  - Lidarr 3.1.6.5078 → 3.2.1.5196 (develop channel, as before).
+  - Dispatcharr 0.33.0 → 0.34.1 and Seerr 3.5.1 → 3.5.2 (three security
+    fixes).
+- **`slskd`/`sabnzbd`: `ensure-backup-bucket` is idempotent again.**
+  `weed shell` now exits 1 when `s3.bucket.create` hits an existing bucket,
+  which failed the prestart task on every start after the first. The script
+  treats "already exists" as success and still fails on any other error.
+
 ### 2026-11-17
 
 - **`orion` replaces `betelgeuse` in the cosmonautical datacenter.** orion
