@@ -226,6 +226,11 @@ Newest entries first, grouped by job.
 
 ### 2026-11-18
 
+- **guacd memory 128 → 256 MB.** The first deploy failed on every node:
+  Apple `container` won't start a VM below 200 MiB ("minimum memory amount
+  allowed"), and Nomad treated the driver failure as unrecoverable, so the
+  alloc failed, got rescheduled and failed again. A new convention test
+  catches any `container` task under the floor.
 - **Deployed, Senior Cosmonauts only.** Back in `main.tf` (and out of
   `test_conventions.py`'s exemption list). Free capacity was checked first:
   each cosmonautical node has CPU to spare, and the tightest, orion, still
