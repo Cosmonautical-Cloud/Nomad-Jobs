@@ -5,6 +5,11 @@ job "audiomuse-ai" {
   group "audiomuse-ai" {
     count = 1
 
+    constraint {
+      attribute = "${attr.unique.hostname}"
+      value     = "orion.cosmonautical.cloud"
+    }
+
     network {
       port "http" {
         static = 8000

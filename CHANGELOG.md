@@ -10,6 +10,22 @@ repo made.
 
 Newest entries first, grouped by job.
 
+## repo-wide
+
+### 2026-11-17
+
+- **`orion` replaces `betelgeuse` in the cosmonautical datacenter.** orion
+  is a new Mac mini that takes over betelgeuse's Consul/Nomad server seat.
+  betelgeuse moves to the jellify datacenter as a client-only host.
+  - `dispatcharr` and `lidarr` are now pinned to orion instead of
+    betelgeuse. Their local state (`~/dispatcharr-local/data`,
+    `~/lidarr-local/config`) has to be copied over with the jobs stopped.
+  - `audiomuse-ai` is now pinned to orion. It was only ever on taurus
+    because that was the one host with the `.app` and its local state, not
+    because of a constraint.
+  - `guacamole` gains an `orion` VNC connection; betelgeuse's stays, since
+    the Mac is still on the LAN at the same address.
+
 ## traefik
 
 ### 2026-10-13

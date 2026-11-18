@@ -2,7 +2,7 @@
 
 Runs Lidarr `3.1.6.5078` (artifact-downloaded, checksum-pinned, ad-hoc
 codesigned at deploy time via `codesign --sign - --force` since it's an
-unsigned release binary), pinned to `betelgeuse.cosmonautical.cloud`, port
+unsigned release binary), pinned to `orion.cosmonautical.cloud`, port
 `8686`.
 
 Config lives on local disk (`/Users/violet/lidarr-local/config`) for
