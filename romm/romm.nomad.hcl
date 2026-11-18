@@ -102,7 +102,7 @@ job "romm" {
       driver = "container"
 
       config {
-        image = "rommapp/romm:5.4.1"
+        image = "rommapp/romm:5.4.1@sha256:8677fb7b81b1d3db20b849e989a1dadc2a11159e51eb34a2acdcb01102274edf"
         ports = ["http"]
 
         # /Volumes/ROMs is the same NFS-backed ROM library nextcloud-roms-scan

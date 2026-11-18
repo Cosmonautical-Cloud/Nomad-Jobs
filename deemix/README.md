@@ -1,8 +1,9 @@
 # deemix
 
 Runs [deemix](https://github.com/bambanah/deemix-docker)
-(`ghcr.io/bambanah/deemix:latest`) via the `container` driver (Apple's
-`container` CLI, not Docker) — a Deezer downloader web UI, single-user mode,
+(`ghcr.io/bambanah/deemix`, pinned by tag + digest) via the `container`
+driver (Apple's `container` CLI, not Docker) — a Deezer downloader web UI,
+single-user mode,
 port `6595`. Config and downloaded files both live on NFS
 (`/Volumes/Cosmonautical/deemix/{config,downloads}`).
 

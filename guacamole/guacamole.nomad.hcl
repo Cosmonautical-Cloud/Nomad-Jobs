@@ -156,7 +156,7 @@ job "guacamole" {
       driver = "container"
 
       config {
-        image = "guacamole/guacd:1.6.0"
+        image = "guacamole/guacd:1.6.0@sha256:8974eaa9ba32f713daf311e7cc8cd7e4cdfba1edea39eed75524e78ef4b08f4f"
         ports = ["guacd"]
       }
 
@@ -183,7 +183,7 @@ job "guacamole" {
       driver = "container"
 
       config {
-        image = "guacamole/guacamole:1.6.0"
+        image = "guacamole/guacamole:1.6.0@sha256:f344085e618bb05e22b964b0208dbd06d3468275bac70206f93805245e067b40"
         ports = ["http"]
       }
 

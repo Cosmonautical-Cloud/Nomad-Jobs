@@ -20,7 +20,7 @@ job "dispatcharr" {
       driver = "container"
 
       config {
-        image = "ghcr.io/dispatcharr/dispatcharr:0.34.1-arm64"
+        image = "ghcr.io/dispatcharr/dispatcharr:0.34.1-arm64@sha256:19cc242a25e87f64a7ed3df9949895f05a1c339667fc3b09b41e445955e6bfc6"
 
         ports = ["http"]
 
@@ -78,7 +78,7 @@ EOT
       driver = "container"
 
       config {
-        image = "ghcr.io/dispatcharr/dispatcharr:0.34.1-arm64"
+        image = "ghcr.io/dispatcharr/dispatcharr:0.34.1-arm64@sha256:19cc242a25e87f64a7ed3df9949895f05a1c339667fc3b09b41e445955e6bfc6"
 
         entrypoint = "/app/docker/entrypoint.celery.sh"
 

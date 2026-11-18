@@ -16,7 +16,7 @@ job "deemix" {
       driver = "container"
 
       config {
-        image = "ghcr.io/bambanah/deemix:latest"
+        image = "ghcr.io/bambanah/deemix:v4.8.0@sha256:aff6120619685b339a704b49bec13469684dbec2c7e39cd7bdf0014217dd1d0a"
         ports = ["http"]
 
         volumes = [

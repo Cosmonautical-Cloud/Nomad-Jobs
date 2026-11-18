@@ -40,6 +40,12 @@ Newest entries first, grouped by job.
   Dashboard listed only GitHub Actions and Terraform, and no image or
   release-tarball bump was ever raised. All five managers now use
   `"/\\.nomad\\.hcl$/"`.
+- **Every image is pinned by version tag + digest.** deemix moved off
+  `:latest` to `v4.8.0` (what `:latest` pointed at). guacd/guacamole,
+  dispatcharr, romm and seerr already had version tags and now carry their
+  `@sha256:` digest too. Apple's `container` CLI pulls `tag@digest` refs
+  fine (checked on cassiopeia). `tests/test_conventions.py` now fails on
+  `:latest` or a missing digest.
 - **App upgrades.** Every checksum was recomputed from the downloaded
   release and matched the one upstream publishes (Nextcloud, rclone, Caddy,
   Keycloak).
