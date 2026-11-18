@@ -1,33 +1,61 @@
 # guacamole
 
-**Not currently deployed.** Untested — its first real Terraform `apply`
-(2026-09-30) hit a cluster-wide CPU shortage (all 3 cosmonautical hosts
-exhausted trying to schedule its 3 tasks at once) and got stuck blocked/
-unscheduled, so it was pulled back out of `main.tf` rather than left in a
-half-working state. The job spec and this README stay here as reference;
-re-add the `nomad_job.guacamole` resource to `main.tf` when it's actually
-ready to test, ideally after checking cluster headroom first. See
-`CHANGELOG.md` for the full incident note.
-
 [Apache Guacamole](https://guacamole.apache.org/) (`guacamole/guacamole:1.6.0`
 + `guacamole/guacd:1.6.0`, container driver) — browser-based VNC access to
-all 6 cluster Macs (`cassiopeia`, `taurus`, `orion`, `betelgeuse`,
-`galileo`, `hopper`), routed at `guac.cosmonautical.cloud`.
+the cluster Macs (`cassiopeia`, `taurus`, `orion`, `lovelace`, `galileo`,
+`hopper`), routed at `guac.cosmonautical.cloud`. **Senior Cosmonauts only.**
 
-Auth is split: Keycloak OIDC (implicit flow — the `guacamole-auth-sso-openid`
-extension has no client-secret/PKCE support, so the Keycloak client is
-public) verifies *identity*; a JDBC/Postgres extension backed by the shared
-[`postgres`](../postgres) cluster owns *authorization*. A user who
-authenticates via Keycloak but has no matching `guacamole_user` row gets zero
-connections. The `schema-init` prestart task is a long, idempotent SQL
-bootstrap (re-run on every deploy, safe to) that creates the role/database,
-loads the JDBC schema fresh from the exact image version's own `initdb.sh`,
-deletes the seeded `guacadmin`/`guacadmin` local-login account (would
-otherwise be a full-admin backdoor around Keycloak SSO), and ensures exactly
-one Guacamole user record (violet's, `ADMINISTER` permission) with VNC
-connections to all 5 Macs. See the job spec's own inline comments for the
-full step-by-step — this bootstrap logic is dense enough that it's better
-read in place than restated here.
+First deployed 2026-11-18. An earlier attempt on 2026-09-30 got stuck
+unscheduled and was pulled from `main.tf`; see `CHANGELOG.md`.
+
+## Access
+
+Two layers, both keyed on the Keycloak realm role **`Senior Cosmonaut`**
+(granted through the `Admins` group):
+
+1. **Keycloak** — the `guacamole` client's browser flow is overridden to
+   `browser-senior-cosmonaut`, which runs the realm's normal login (password
+   + conditional OTP) and then denies anyone without the role. The same flow
+   gates `semaphore`. The client also has *Consent required* on, so after a
+   Senior Cosmonaut's first login Guacamole stays listed in their account
+   console's Applications page. *Always display in UI* is off on purpose:
+   it can't be filtered by role and would show the link to everyone.
+2. **Guacamole** — a `realm roles as groups` protocol mapper on the Keycloak
+   client puts the user's realm roles in the ID token's `groups` claim
+   (`OPENID_GROUPS_CLAIM_TYPE`). The JDBC database has a `Senior Cosmonaut`
+   user group with `READ` on every connection, and Guacamole applies
+   database group permissions to SSO users whose groups match by name. So a
+   Senior Cosmonaut gets every connection without needing their own
+   `guacamole_user` row.
+
+Keycloak's client config isn't managed by this repo; it was set up by hand
+through the admin API.
+
+## Notable pieces
+
+- **SSO only.** Keycloak OIDC (implicit flow — `guacamole-auth-sso-openid`
+  has no client-secret/PKCE support, so the Keycloak client is public)
+  verifies identity; the JDBC/Postgres extension on the shared
+  [`postgres`](../postgres) cluster owns authorization.
+  `EXTENSION_PRIORITY=openid` makes the login page redirect straight to
+  Keycloak instead of showing the JDBC username/password form.
+- **`schema-init` prestart task** — idempotent, re-run on every deploy:
+  1. Creates the `guacamole` Postgres role/database if missing.
+  2. Loads the JDBC schema if missing, generated from the exact image
+     version via its own `initdb.sh` (not a hand-copied SQL file).
+  3. Deletes the schema's seeded `guacadmin`/`guacadmin` account, which
+     would otherwise be a full-admin backdoor around Keycloak.
+  4. Ensures violet's user row (random, never-checked password) with
+     `ADMINISTER`, and the `Senior Cosmonaut` user group.
+  5. Ensures a VNC connection (macOS Screen Sharing, port 5900) per Mac,
+     with parameters synced from Consul KV on every run, and `READ` for
+     violet and the group.
+- **psql variables don't expand inside `DO $do$ … $do$`.** The bootstrap
+  hands them to the PL/pgSQL block with `set_config('bootstrap.*', …)` /
+  `current_setting('bootstrap.*')` instead.
+- **Connections are only ever added or updated, never removed.** Dropping a
+  Mac from the list leaves its connection in the database; delete it in
+  Guacamole's admin UI.
 
 ## Consul KV keys
 
@@ -35,7 +63,7 @@ read in place than restated here.
 |---|---|
 | `postgres/PATRONI_SUPERUSER_PASSWORD` | Bootstrap: creating the `guacamole` role/database |
 | `guacamole/DB_PASSWORD` | Postgres role password (JDBC auth/authz schema) |
-| `guacamole/MACOS_VNC_USERNAME` | Shared VNC login for all 5 Mac connections |
-| `guacamole/MACOS_VNC_PASSWORD` | Shared VNC login for all 5 Mac connections |
+| `guacamole/MACOS_VNC_USERNAME` | Shared VNC login for all the Mac connections |
+| `guacamole/MACOS_VNC_PASSWORD` | Shared VNC login for all the Mac connections |
 
 For history/rationale, see [`CHANGELOG.md`](../CHANGELOG.md).

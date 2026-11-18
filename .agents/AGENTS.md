@@ -75,7 +75,7 @@ the highest in the whole repo) specifically because of this, not because
 these are all trivially lightweight workloads.
 
 This isn't just inferred from the numbers looking small — there's a real
-incident behind it: `guacamole`'s first (and so far only) deploy attempt
+incident behind it: `guacamole`'s first deploy attempt
 (2026-09-30) got stuck permanently blocked/unscheduled because its three
 tasks together only needed `cpu = 4`, and that alone was enough to exhaust
 free CPU across all three cosmonautical hosts at once (see its README and
@@ -94,6 +94,12 @@ the whole 3-host pool when several jobs deploy/restart together. This is
 observed behavior from this repo's job history, not something confirmed
 against Nomad's own fingerprinter source — treat it as a strong empirical
 pattern, not a documented guarantee.
+
+**Update 2026-11-18:** the cosmonautical nodes now fingerprint at
+46464 CPU shares each (`/v1/node/<id>` → `NodeResources.Cpu.CpuShares`),
+with only ~35 allocated, so CPU is no longer the tight resource here; memory
+is (orion had ~2.5 GB free). The small-integer `cpu` convention still works,
+but check actual free memory before adding a job.
 
 ## This repo is public — never commit a real secret value
 
@@ -132,7 +138,7 @@ have this false-positive problem and is safe to trust as a CI gate — prefer
 it over this grep when scripting rather than reading by hand.
 
 **Lower-severity, not-yet-fixed**: a handful of internal RFC1918 IPs
-(`10.10.37.x`) are hardcoded in `guacamole.nomad.hcl` (the 5 Macs' VNC
+(`10.10.37.x`) are hardcoded in `guacamole.nomad.hcl` (the Macs' VNC
 addresses) and the UniFi router host in `traefik.nomad.hcl`/`slskd.nomad.hcl`,
 plus a few UniFi port-forward rule IDs. None of these are credentials or
 directly exploitable (private, unroutable from outside the LAN), but they do
