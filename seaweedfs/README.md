@@ -17,7 +17,7 @@ folders").
 The `master`/`volume` tiers of the cluster, deployed as a Nomad `system`
 job — one alloc of each group on every matching client, which in practice
 means one `master` and one `volume` on each of the three cosmonautical hosts
-(`cassiopeia`, `taurus`, `betelgeuse`), hardcoded as each other's
+(`cassiopeia`, `taurus`, `orion`), hardcoded as each other's
 peers/master list.
 
 - **`masters`** — the metadata/coordination tier (`weed master`), one per

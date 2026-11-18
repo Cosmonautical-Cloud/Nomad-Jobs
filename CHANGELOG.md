@@ -20,6 +20,12 @@ Newest entries first, grouped by job.
   - `dispatcharr` and `lidarr` are now pinned to orion instead of
     betelgeuse. Their local state (`~/dispatcharr-local/data`,
     `~/lidarr-local/config`) has to be copied over with the jobs stopped.
+  - `seaweedfs`'s `-peers`/`-mserver` and `seaweedfs-filer`'s `-master` now
+    list orion instead of betelgeuse. betelgeuse's 35 volumes were evacuated
+    to orion first (`volumeServer.evacuate -target`), so each keeps its other
+    replica on cassiopeia or taurus. orion's master can only start once it's
+    in its own `-peers`; Raft membership is fixed up after the apply with
+    `cluster.raft.add`/`cluster.raft.remove`.
   - `audiomuse-ai` is now pinned to orion. It was only ever on taurus
     because that was the one host with the `.app` and its local state, not
     because of a constraint.
