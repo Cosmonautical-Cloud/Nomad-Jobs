@@ -15,7 +15,7 @@ job "seerr" {
             driver = "container"
 
             config {
-                image = "ghcr.io/seerr-team/seerr:v3.5.1"
+                image = "ghcr.io/seerr-team/seerr:v3.5.2"
 
                 ports = ["http"]
 

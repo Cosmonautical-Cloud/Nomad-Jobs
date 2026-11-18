@@ -19,21 +19,21 @@ job "nextcloud" {
       driver = "raw_exec"
 
       artifact {
-        source      = "https://download.nextcloud.com/server/releases/nextcloud-34.0.4.tar.bz2?archive=false"
-        destination = "local/nextcloud-34.0.4.tar.bz2"
+        source      = "https://download.nextcloud.com/server/releases/nextcloud-34.0.6.tar.bz2?archive=false"
+        destination = "local/nextcloud-34.0.6.tar.bz2"
         mode        = "file"
 
         options {
-          checksum = "sha256:00f226e6364f96e0918ab06157158f66601b8cedc25af777f5ee5a3056f42b83"
+          checksum = "sha256:1ecede06e7be89388c8c117eb2b7fe27a8b5171d2f5a57c6bc3247281a566389"
         }
       }
 
       artifact {
-        source      = "https://github.com/caddyserver/caddy/releases/download/v2.11.4/caddy_2.11.4_mac_arm64.tar.gz"
+        source      = "https://github.com/caddyserver/caddy/releases/download/v2.11.9/caddy_2.11.9_mac_arm64.tar.gz"
         destination = "local/caddy/"
 
         options {
-          checksum = "sha512:3190ae0df98b59ab4b6021556fa35adc3c526a4f3e138776b0eaec8a037cc26121cbbb1ad53453f565551b47d37d5ba4755e2c2c3652256737fe2ce9e53c8ec0"
+          checksum = "sha512:166a8fdd183dc597ebe3a12d71e2e8eb313ab673ae8d3e286cb92bb0078d04233c23347543f7d7e8285b44136416e6718b0d106afe973de8ede4d81b6809c6bb"
         }
       }
 
@@ -266,7 +266,7 @@ fpm_pid_file="$NOMAD_ALLOC_DIR/php-fpm.pid"
 if [ ! -f "$app/version.php" ]; then
   rm -rf "$app"
   mkdir -p "$NOMAD_ALLOC_DIR/data"
-  /usr/bin/tar -xjf "$NOMAD_TASK_DIR/nextcloud-34.0.4.tar.bz2" -C "$NOMAD_ALLOC_DIR/data"
+  /usr/bin/tar -xjf "$NOMAD_TASK_DIR/nextcloud-34.0.6.tar.bz2" -C "$NOMAD_ALLOC_DIR/data"
 fi
 
 mkdir -p "$config_dir" "$apps_dir" "$data_dir"

@@ -85,12 +85,12 @@ job "lidarr" {
       driver = "raw_exec"
 
       artifact {
-        source      = "https://github.com/Lidarr/Lidarr/releases/download/v3.1.6.5078/Lidarr.develop.3.1.6.5078.osx-core-arm64.tar.gz"
+        source      = "https://github.com/Lidarr/Lidarr/releases/download/v3.2.1.5196/Lidarr.develop.3.2.1.5196.osx-core-arm64.tar.gz"
         destination = "local/lidarr-release"
         mode        = "dir"
 
         options {
-          checksum = "sha256:c191bf86fdf48e824724ea71be4963ea53829bead48d0c3b507f5f43ce2b555f"
+          checksum = "sha256:1291678c58e0210f2a4290d95a3130318821d12f0136754258a5d82b23120ce4"
         }
       }
 

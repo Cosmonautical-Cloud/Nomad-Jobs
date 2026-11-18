@@ -103,8 +103,8 @@ job "semaphore" {
         if [ ! -x "$bin_dir/semaphore" ]; then
           tmp_tgz="$NOMAD_TASK_DIR/semaphore.tar.gz"
           curl -fsSL -o "$tmp_tgz" \
-            "https://github.com/semaphoreui/semaphore/releases/download/v2.19.12/semaphore_2.19.12_darwin_arm64.tar.gz"
-          echo "08e9e4232299908cde1ca3806f9f1a1abadc54c3832b3e8747abff8d7c8abd80  $tmp_tgz" | shasum -a 256 -c -
+            "https://github.com/semaphoreui/semaphore/releases/download/v2.19.21/semaphore_2.19.21_darwin_arm64.tar.gz"
+          echo "fe23017b4f198dcd412c70fc1fbcbdcad5956ffce3ea2b70167b3af7a0a08bbb  $tmp_tgz" | shasum -a 256 -c -
           tar -xzf "$tmp_tgz" -C "$bin_dir" semaphore
           chmod 755 "$bin_dir/semaphore"
         fi

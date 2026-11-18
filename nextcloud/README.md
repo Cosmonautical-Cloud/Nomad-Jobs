@@ -27,8 +27,8 @@ config/custom-apps on a separate persistent path
 (`/Volumes/Cosmonautical/nextcloud/persistent`), synced back from local
 ephemeral disk every 5 minutes.
 
-Nextcloud version `34.0.4`, downloaded and checksum-verified via an
-`artifact` block on every deploy. Caddy `2.11.4` (mac_arm64 build), same
+Nextcloud version `34.0.6`, downloaded and checksum-verified via an
+`artifact` block on every deploy. Caddy `2.11.9` (mac_arm64 build), same
 pattern.
 
 `nextcloud`, `nextcloud-cron`, `nextcloud-preview-generate`, and
@@ -66,7 +66,7 @@ reboot race where this job's cron fires before the NFS mounts or the main
 
 Backs up Nextcloud's data directory (`/Volumes/Cosmonautical/nextcloud/data`)
 to a B2-compatible S3 bucket (`cosmonautical-nextcloud-backups`) via
-`rclone` (`v1.75.2`, checksum-pinned, downloaded fresh each run),
+`rclone` (`v1.76.0`, checksum-pinned, downloaded fresh each run),
 timestamped per run (`b2:cosmonautical-nextcloud-backups/<UTC timestamp>`).
 Prunes backups older than 7 days after a successful copy — a failed copy
 leaves existing backups untouched rather than pruning first.

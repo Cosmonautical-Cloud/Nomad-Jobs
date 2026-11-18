@@ -1,6 +1,6 @@
 # keycloak
 
-The cluster's SSO/IdP (`auth.cosmonautical.cloud`), Keycloak `26.7.5`
+The cluster's SSO/IdP (`auth.cosmonautical.cloud`), Keycloak `26.8.2`
 (artifact-downloaded tarball, checksum-pinned), running on OpenJDK via
 `raw_exec`. Backed by its own database on the shared
 [`postgres`](../postgres) cluster (`KC_DB_URL` points at

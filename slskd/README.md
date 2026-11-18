@@ -1,6 +1,6 @@
 # slskd
 
-Runs [slskd](https://github.com/slskd/slskd) `0.24.1` (artifact-downloaded,
+Runs [slskd](https://github.com/slskd/slskd) `0.26.2` (artifact-downloaded,
 checksum-pinned) — a Soulseek client/daemon — ports `5030`/`5031`/`50300`
 (the last being the actual Soulseek peer port, kept in sync with the UniFi
 router's port-forward rule by the `update-port-forward` prestart task, same

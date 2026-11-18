@@ -1,6 +1,6 @@
 # lidarr
 
-Runs Lidarr `3.1.6.5078` (artifact-downloaded, checksum-pinned, ad-hoc
+Runs Lidarr `3.2.1.5196` (artifact-downloaded, checksum-pinned, ad-hoc
 codesigned at deploy time via `codesign --sign - --force` since it's an
 unsigned release binary), pinned to `orion.cosmonautical.cloud`, port
 `8686`.

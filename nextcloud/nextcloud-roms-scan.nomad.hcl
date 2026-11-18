@@ -59,12 +59,12 @@ job "nextcloud-roms-scan" {
       driver = "raw_exec"
 
       artifact {
-        source      = "https://download.nextcloud.com/server/releases/nextcloud-34.0.4.tar.bz2?archive=false"
-        destination = "local/nextcloud-34.0.4.tar.bz2"
+        source      = "https://download.nextcloud.com/server/releases/nextcloud-34.0.6.tar.bz2?archive=false"
+        destination = "local/nextcloud-34.0.6.tar.bz2"
         mode        = "file"
 
         options {
-          checksum = "sha256:00f226e6364f96e0918ab06157158f66601b8cedc25af777f5ee5a3056f42b83"
+          checksum = "sha256:1ecede06e7be89388c8c117eb2b7fe27a8b5171d2f5a57c6bc3247281a566389"
         }
       }
 
@@ -105,7 +105,7 @@ app="$NEXTCLOUD_APP_DIR"
 persistent="/Volumes/Cosmonautical/nextcloud/persistent"
 
 mkdir -p "${NOMAD_ALLOC_DIR}/data"
-/usr/bin/tar -xjf "$NOMAD_TASK_DIR/nextcloud-34.0.4.tar.bz2" -C "${NOMAD_ALLOC_DIR}/data"
+/usr/bin/tar -xjf "$NOMAD_TASK_DIR/nextcloud-34.0.6.tar.bz2" -C "${NOMAD_ALLOC_DIR}/data"
 
 rm -rf "$app/config" "$app/custom_apps"
 ln -s "$persistent/config" "$app/config"

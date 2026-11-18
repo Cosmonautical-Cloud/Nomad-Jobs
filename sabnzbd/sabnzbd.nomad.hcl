@@ -33,7 +33,13 @@ job "sabnzbd" {
         data        = <<EOT
 #!/bin/sh
 set -eu
-printf 's3.bucket.create -name sabnzbd-backups\nexit\n' | /opt/homebrew/bin/weed shell -filer={{ range service "seaweedfs-filer" }}{{ .Address }}:{{ .Port }}{{ end }}
+if ! out=$(printf 's3.bucket.create -name sabnzbd-backups\nexit\n' | /opt/homebrew/bin/weed shell -filer={{ range service "seaweedfs-filer" }}{{ .Address }}:{{ .Port }}{{ end }} 2>&1); then
+  case "$out" in
+    *"already exists"*) ;;
+    *) echo "$out" >&2; exit 1 ;;
+  esac
+fi
+echo "$out"
 EOT
         destination = "local/ensure-bucket.sh"
         perms       = "755"

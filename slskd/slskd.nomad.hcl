@@ -35,7 +35,13 @@ job "slskd" {
         data        = <<EOT
 #!/bin/sh
 set -eu
-printf 's3.bucket.create -name slskd-backups\nexit\n' | /opt/homebrew/bin/weed shell -filer={{ range service "seaweedfs-filer" }}{{ .Address }}:{{ .Port }}{{ end }}
+if ! out=$(printf 's3.bucket.create -name slskd-backups\nexit\n' | /opt/homebrew/bin/weed shell -filer={{ range service "seaweedfs-filer" }}{{ .Address }}:{{ .Port }}{{ end }} 2>&1); then
+  case "$out" in
+    *"already exists"*) ;;
+    *) echo "$out" >&2; exit 1 ;;
+  esac
+fi
+echo "$out"
 EOT
         destination = "local/ensure-bucket.sh"
         perms       = "755"
@@ -237,12 +243,12 @@ EOT
       driver = "raw_exec"
 
       artifact {
-        source      = "https://github.com/slskd/slskd/releases/download/0.24.1/slskd-0.24.1-osx-arm64.zip"
+        source      = "https://github.com/slskd/slskd/releases/download/0.26.2/slskd-0.26.2-osx-arm64.zip"
         destination = "local/slskd-release"
         mode        = "dir"
 
         options {
-          checksum = "sha256:03604ef2359564f806372d0874716551bfa81a2f29b759556c76993aead91b2e"
+          checksum = "sha256:18d3ebf7760cd93296b61f640c87b383b41a142cd445a04a633d3b596313ef85"
         }
       }
 
