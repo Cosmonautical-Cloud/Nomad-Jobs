@@ -262,11 +262,12 @@ fpm_health_socket="$NOMAD_ALLOC_DIR/php-fpm-health.sock"
 fpm_ui_socket="$NOMAD_ALLOC_DIR/php-fpm-ui.sock"
 fpm_downloads_socket="$NOMAD_ALLOC_DIR/php-fpm-downloads.sock"
 fpm_pid_file="$NOMAD_ALLOC_DIR/php-fpm.pid"
+release="34.0.6"
 
-if [ ! -f "$app/version.php" ]; then
+if ! grep -qs "OC_VersionString = '$release';" "$app/version.php"; then
   rm -rf "$app"
   mkdir -p "$NOMAD_ALLOC_DIR/data"
-  /usr/bin/tar -xjf "$NOMAD_TASK_DIR/nextcloud-34.0.6.tar.bz2" -C "$NOMAD_ALLOC_DIR/data"
+  /usr/bin/tar -xjf "$NOMAD_TASK_DIR/nextcloud-$release.tar.bz2" -C "$NOMAD_ALLOC_DIR/data"
 fi
 
 mkdir -p "$config_dir" "$apps_dir" "$data_dir"
@@ -311,7 +312,7 @@ run_with_timeout() {
 
 php_bin="/opt/homebrew/opt/php@8.4/bin/php"
 
-if ! run_with_timeout 90 "$php_bin" occ upgrade --no-interaction; then
+if ! run_with_timeout 1500 "$php_bin" occ upgrade --no-interaction; then
   echo "occ upgrade timed out or failed" >&2
   exit 1
 fi
@@ -413,7 +414,7 @@ EOT
 
           check_restart {
             limit           = 6
-            grace           = "90s"
+            grace           = "30m"
             ignore_warnings = false
           }
         }

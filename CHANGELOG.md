@@ -10,6 +10,26 @@ repo made.
 
 Newest entries first, grouped by job.
 
+## nextcloud
+
+### 2026-11-18
+
+- **Version bumps now actually upgrade the server.** `start.sh` only
+  unpacked the release when `version.php` was missing, and the sticky
+  ephemeral disk carries the previous alloc's tree forward. So the 34.0.6
+  bump below left the service on 34.0.4 (the periodic jobs unpack fresh
+  each run and did get 34.0.6). The script now re-extracts whenever
+  `version.php` doesn't match the pinned `release`. `config` and
+  `custom_apps` are symlinks into the alloc dir and the NAS, so they
+  survive the `rm -rf`.
+- **`occ upgrade` timeout 90s → 25m, `check_restart` grace 90s → 30m.**
+  `occ upgrade` also updates App Store apps, copying them onto the NFS
+  `custom_apps`. On the 34.0.6 rollout the 90s `kill -9` landed mid-copy
+  and left the Music app with 323 of its 467 files. Every `occ` call then
+  failed on a missing class, and the job went `failed` until the app was
+  re-extracted by hand. The check grace has to outlast the upgrade, or
+  `check_restart` kills it the same way.
+
 ## repo-wide
 
 ### 2026-11-18
