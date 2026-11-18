@@ -34,6 +34,17 @@ Newest entries first, grouped by job.
 
 ### 2026-11-18
 
+- **Semaphore 2.20.23 actually deploys.** Renovate #20 was merged as-is,
+  even though its PR note says not to. It bumped only the release tag, so
+  the bootstrap task fetched `v2.20.23/semaphore_2.19.21_darwin_arm64.tar.gz`,
+  got a 404 (curl exit 56) and failed the job. The filename and sha256 are
+  now 2.20.23's, and the checksum matches upstream's
+  `semaphore_2.20.23_checksums.txt`. 2.20 never started against the
+  database, so 2.20.23 is still a clean upgrade from 2.19.21. This also
+  overrides the earlier note below to wait on 2.20.
+- **New test: a release URL's filename must carry its tag's version.**
+  `test_release_download_filename_matches_tag` fails a tag-only bump like
+  #20 in CI, so it can't be merged by accident again.
 - **Renovate's custom managers now match the job specs.** Renovate 41+
   treats a `managerFilePatterns` entry as a glob unless it's wrapped in
   `/.../`, so `"\\.nomad\\.hcl$"` matched nothing: the Dependency
