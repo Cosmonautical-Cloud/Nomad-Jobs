@@ -224,6 +224,33 @@ Newest entries first, grouped by job.
 
 ## guacamole
 
+### 2026-11-18
+
+- **Deployed, Senior Cosmonauts only.** Back in `main.tf` (and out of
+  `test_conventions.py`'s exemption list). Free capacity was checked first:
+  each cosmonautical node has CPU to spare, and the tightest, orion, still
+  has ~2.5 GB of memory free against the job's ~1.2 GB.
+- **Access is gated on the `Senior Cosmonaut` realm role**, twice: a new
+  Keycloak `guacamole` client (public, implicit flow) uses the
+  `browser-senior-cosmonaut` flow that already gated `semaphore`, and a
+  `Senior Cosmonaut` JDBC user group gets `READ` on every connection, matched
+  by name against a `groups` claim of realm roles. Before this, only violet
+  had a Guacamole user row; yuri, also a Senior Cosmonaut, would have logged
+  in to an empty connection list.
+- **Fixed the bootstrap SQL, which had never run.** It referenced psql
+  variables (`:'hash_hex'`, `:'vnc_user'`, …) inside a `DO $do$ … $do$`
+  block. psql doesn't substitute variables inside dollar-quoted strings, so
+  the first deploy would have failed on a syntax error at `:`. The values now
+  go through `set_config()`/`current_setting()`. Verified against the real
+  1.6.0 schema in a throwaway Postgres: two runs give the same 6
+  connections and grants.
+- **`betelgeuse` connection renamed `lovelace`.** Same Mac, same address
+  (`10.10.37.193`); it became `lovelace.jellify.app` after leaving the
+  cosmonautical server set.
+- `EXTENSION_PRIORITY=openid` so the login page redirects straight to
+  Keycloak (with JDBC also loaded, Guacamole would otherwise show its own
+  login form first).
+
 ### 2026-09-30
 
 - **Pulled out of `main.tf`, not currently deployed.** Its first real

@@ -36,7 +36,7 @@ datacenter: [`Jellify/Nomad-Jobs`](https://github.com/Jellify-Music/Nomad-Jobs)
 - [`openldap`](openldap)
 - [`deemix`](deemix)
 - [`dispatcharr`](dispatcharr)
-- [`guacamole`](guacamole) — not currently deployed, see its README
+- [`guacamole`](guacamole)
 - [`jellyfin`](jellyfin)
 - [`keycloak`](keycloak)
 - [`lidarr`](lidarr)
@@ -273,7 +273,8 @@ moment (all 3 were near capacity from the other jobs in the same batch
 starting up together), so it got stuck blocked/unscheduled. It's been
 pulled back out of `main.tf` (see its own README) rather than left in that
 state — re-add it once there's a specific reason to test it, ideally with
-some free headroom confirmed first.
+some free headroom confirmed first. It was re-added and first deployed on
+2026-11-18 (see `CHANGELOG.md`).
 
 **For any future job brought in from the legacy repo**, still prefer the
 careful path — `terraform import` then a verified no-op `plan` — rather

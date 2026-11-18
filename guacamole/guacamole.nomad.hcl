@@ -10,26 +10,6 @@ job "guacamole" {
       port "guacd" { static = 4822 }
     }
 
-    # Idempotent bootstrap, re-run on every deploy:
-    #  1. Creates the `guacamole` Postgres role/database on the cluster's
-    #     existing Patroni cluster (postgres.nomad.hcl) if not already there.
-    #  2. Loads the guacamole-auth-jdbc-postgresql schema, generated fresh
-    #     from the exact image version below via its own `initdb.sh` helper
-    #     (not a hand-copied SQL file, so it always matches), if not already
-    #     loaded.
-    #  3. Deletes the schema's seeded `guacadmin`/`guacadmin` local-login
-    #     account - login here is Keycloak SSO only, and that account would
-    #     otherwise be a full-admin backdoor around it.
-    #  4. Ensures a Guacamole user record exists for violet's Keycloak/LDAP
-    #     identity (its password is random and never checked - the OpenID
-    #     extension authenticates, this JDBC record only authorizes), with
-    #     `ADMINISTER` system permission.
-    #  5. Ensures a VNC connection exists for each of the 5 cluster Macs
-    #     (macOS Screen Sharing, connection parameters kept in sync with
-    #     Consul KV `guacamole/MACOS_VNC_USERNAME`/`MACOS_VNC_PASSWORD` on
-    #     every run), with violet granted READ on each.
-    # No one else who can log into the cosmonautical Keycloak realm gets any
-    # connections, since no other Guacamole user record exists.
     task "schema-init" {
       driver = "raw_exec"
 
@@ -70,9 +50,9 @@ job "guacamole" {
         fi
 
         # 3-5. Bootstrap: remove the seeded local-login backdoor, ensure
-        # violet's SSO-linked profile, ensure the 5 VNC connections + grants.
-        # Random throwaway password for violet's JDBC row - never checked,
-        # since OpenID (not JDBC) authenticates this user.
+        # violet's SSO-linked profile and the Senior Cosmonaut group, ensure
+        # the VNC connections + grants. Random throwaway password for violet's
+        # JDBC row - never checked, since OpenID (not JDBC) authenticates.
         salt_hex=$(/usr/bin/openssl rand -hex 32)
         secret_hex=$(/usr/bin/openssl rand -hex 32)
         hash_hex=$(printf '%s' "$${secret_hex}$${salt_hex}" | /usr/bin/xxd -r -p | /usr/bin/openssl dgst -sha256 -binary | /usr/bin/xxd -p -c 256 | tr -d '\n')
@@ -81,9 +61,14 @@ job "guacamole" {
           -v hash_hex="$hash_hex" -v salt_hex="$salt_hex" \
           -v vnc_user="{{ key "guacamole/MACOS_VNC_USERNAME" }}" \
           -v vnc_pw="{{ key "guacamole/MACOS_VNC_PASSWORD" }}" <<'SQL'
+        SELECT set_config('bootstrap.hash_hex', :'hash_hex', false),
+               set_config('bootstrap.salt_hex', :'salt_hex', false),
+               set_config('bootstrap.vnc_user', :'vnc_user', false),
+               set_config('bootstrap.vnc_pw',   :'vnc_pw',   false) \g /dev/null
         DO $do$
         DECLARE
           v_entity_id integer;
+          g_entity_id integer;
           h RECORD;
           conn_id integer;
         BEGIN
@@ -94,9 +79,17 @@ job "guacamole" {
             INSERT INTO guacamole_entity (name, type) VALUES ('violet', 'USER')
               RETURNING entity_id INTO v_entity_id;
             INSERT INTO guacamole_user (entity_id, password_hash, password_salt, password_date)
-              VALUES (v_entity_id, decode(:'hash_hex', 'hex'), decode(:'salt_hex', 'hex'), CURRENT_TIMESTAMP);
+              VALUES (v_entity_id, decode(current_setting('bootstrap.hash_hex'), 'hex'),
+                      decode(current_setting('bootstrap.salt_hex'), 'hex'), CURRENT_TIMESTAMP);
             INSERT INTO guacamole_system_permission (entity_id, permission)
               VALUES (v_entity_id, 'ADMINISTER');
+          END IF;
+
+          SELECT entity_id INTO g_entity_id FROM guacamole_entity WHERE name = 'Senior Cosmonaut' AND type = 'USER_GROUP';
+          IF g_entity_id IS NULL THEN
+            INSERT INTO guacamole_entity (name, type) VALUES ('Senior Cosmonaut', 'USER_GROUP')
+              RETURNING entity_id INTO g_entity_id;
+            INSERT INTO guacamole_user_group (entity_id) VALUES (g_entity_id);
           END IF;
 
           FOR h IN
@@ -104,7 +97,7 @@ job "guacamole" {
               ('cassiopeia', '10.10.37.18'),
               ('taurus',     '10.10.37.127'),
               ('orion',      '10.10.37.27'),
-              ('betelgeuse', '10.10.37.193'),
+              ('lovelace',   '10.10.37.193'),
               ('galileo',    '10.10.37.45'),
               ('hopper',     '10.10.37.51')
             ) AS t(name, ip)
@@ -121,18 +114,14 @@ job "guacamole" {
               VALUES
                 (conn_id, 'hostname', h.ip),
                 (conn_id, 'port', '5900'),
-                (conn_id, 'username', :'vnc_user'),
-                (conn_id, 'password', :'vnc_pw')
+                (conn_id, 'username', current_setting('bootstrap.vnc_user')),
+                (conn_id, 'password', current_setting('bootstrap.vnc_pw'))
               ON CONFLICT (connection_id, parameter_name)
               DO UPDATE SET parameter_value = EXCLUDED.parameter_value;
 
-            IF NOT EXISTS (
-              SELECT 1 FROM guacamole_connection_permission
-              WHERE entity_id = v_entity_id AND connection_id = conn_id AND permission = 'READ'
-            ) THEN
-              INSERT INTO guacamole_connection_permission (entity_id, connection_id, permission)
-                VALUES (v_entity_id, conn_id, 'READ');
-            END IF;
+            INSERT INTO guacamole_connection_permission (entity_id, connection_id, permission)
+              VALUES (v_entity_id, conn_id, 'READ'), (g_entity_id, conn_id, 'READ')
+              ON CONFLICT DO NOTHING;
           END LOOP;
         END
         $do$ LANGUAGE plpgsql;
@@ -188,24 +177,19 @@ job "guacamole" {
       }
 
       env {
-        GUACD_HOSTNAME = "guacd.service.consul"
-        GUACD_PORT     = "4822"
-        WEBAPP_CONTEXT = "ROOT"
+        GUACD_HOSTNAME     = "guacd.service.consul"
+        GUACD_PORT         = "4822"
+        WEBAPP_CONTEXT     = "ROOT"
+        EXTENSION_PRIORITY = "openid"
 
-        # Auth: Keycloak OIDC (SSO, implicit flow - guacamole-auth-sso-openid
-        # has no client-secret/PKCE support, so the Keycloak client must be
-        # public with Implicit Flow enabled) verifies identity; JDBC/Postgres
-        # below owns authorization. A user who authenticates via Keycloak but
-        # has no matching row in guacamole_user gets zero connections - see
-        # the schema-init task above for the bootstrap that creates exactly
-        # one such row, for violet.
         OPENID_AUTHORIZATION_ENDPOINT = "https://auth.cosmonautical.cloud/realms/cosmonautical/protocol/openid-connect/auth"
         OPENID_JWKS_ENDPOINT          = "https://auth.cosmonautical.cloud/realms/cosmonautical/protocol/openid-connect/certs"
         OPENID_ISSUER                 = "https://auth.cosmonautical.cloud/realms/cosmonautical"
         OPENID_CLIENT_ID              = "guacamole"
         OPENID_REDIRECT_URI           = "https://guac.cosmonautical.cloud/"
         OPENID_USERNAME_CLAIM_TYPE    = "preferred_username"
-        OPENID_SCOPE                  = "openid email profile"
+        OPENID_GROUPS_CLAIM_TYPE      = "groups"
+        OPENID_SCOPE                 = "openid email profile"
       }
 
       template {

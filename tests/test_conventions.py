@@ -13,14 +13,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 # Jobs intentionally exempt from the "must have a main.tf resource" check,
 # keyed by job directory name, with why. Keep empty unless a job has a
 # documented, deliberate exception (see that job's own README/CHANGELOG).
-NO_MAIN_TF_RESOURCE_EXEMPT: dict[str, str] = {
-    "guacamole": (
-        "deliberately pulled from main.tf after its first-time schedule "
-        "attempt hit a cluster-wide CPU shortage during migration - spec/"
-        "README kept as a reference copy only, see README's 'How these "
-        "ended up under Terraform' section"
-    ),
-}
+NO_MAIN_TF_RESOURCE_EXEMPT: dict[str, str] = {}
 
 # A directory usually holds one job, but a stack folder (e.g. `nextcloud/`)
 # holds several job specs side by side sharing one README.
