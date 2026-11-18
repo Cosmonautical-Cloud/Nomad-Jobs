@@ -36,7 +36,7 @@ job "seaweedfs" {
           "-ip=${attr.unique.hostname}",
           "-port=9333",
           "-port.grpc=19333",
-          "-peers=cassiopeia.cosmonautical.cloud:9333,taurus.cosmonautical.cloud:9333,orion.cosmonautical.cloud:9333",
+          "-peers=cassiopeia.cosmonautical.cloud:9333,taurus.cosmonautical.cloud:9333,betelgeuse.cosmonautical.cloud:9333",
           "-mdir=/opt/seaweedfs/master",
           "-volumeSizeLimitMB=1024",
           "-defaultReplication=001"
@@ -66,7 +66,7 @@ job "seaweedfs" {
           "-ip=${NOMAD_IP_http}",
           "-port=8080",
           "-port.grpc=18080",
-          "-mserver=cassiopeia.cosmonautical.cloud:9333,taurus.cosmonautical.cloud:9333,orion.cosmonautical.cloud:9333",
+          "-mserver=cassiopeia.cosmonautical.cloud:9333,taurus.cosmonautical.cloud:9333,betelgeuse.cosmonautical.cloud:9333",
           "-dir=/opt/seaweedfs/data",
           "-max=0"
         ]
