@@ -144,3 +144,19 @@ def test_consul_kv_keys_documented_in_readme(hcl_path):
         f"{readme_path} doesn't document these Consul KV keys referenced in "
         f"{hcl_path.name}: {missing}"
     )
+
+
+RELEASE_URL_RE = re.compile(r"github\.com/[^/\s\"]+/[^/\s\"]+/releases/download/v?([^/\s\"]+)/([^\s\"]+)")
+
+
+@pytest.mark.parametrize("hcl_path", JOB_HCL_FILES, ids=JOB_HCL_IDS)
+def test_release_download_filename_matches_tag(hcl_path):
+    """A GitHub release URL's filename should carry the same version as its
+    tag. Renovate's regex managers only bump the tag, so a PR merged as-is
+    points at an asset that doesn't exist (semaphore, 2026-11-18).
+    """
+    for version, filename in RELEASE_URL_RE.findall(hcl_path.read_text()):
+        assert version in filename, (
+            f"{hcl_path.name}: release tag v{version} but asset {filename} - "
+            "bump the filename and checksum along with the tag"
+        )
