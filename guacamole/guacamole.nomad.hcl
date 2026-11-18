@@ -164,7 +164,7 @@ job "guacamole" {
 
       resources {
         cpu    = 1
-        memory = 128
+        memory = 256
       }
     }
 

@@ -153,3 +153,28 @@ def test_release_download_filename_matches_tag(hcl_path):
             f"{hcl_path.name}: release tag v{version} but asset {filename} - "
             "bump the filename and checksum along with the tag"
         )
+
+
+TASK_RE = re.compile(r'^\s*task\s+"([^"]+)"\s*\{', re.MULTILINE)
+CONTAINER_DRIVER_RE = re.compile(r'^\s*driver\s*=\s*"container"', re.MULTILINE)
+MEMORY_RE = re.compile(r"^\s*memory\s*=\s*(\d+)", re.MULTILINE)
+CONTAINER_MIN_MEMORY_MB = 200
+
+
+@pytest.mark.parametrize("hcl_path", JOB_HCL_FILES, ids=JOB_HCL_IDS)
+def test_container_tasks_meet_memory_floor(hcl_path):
+    """Apple `container` refuses to start a VM under 200 MiB ("minimum memory
+    amount allowed"), and Nomad treats that as unrecoverable - so guacd at
+    128 MB failed the whole alloc on first deploy (guacamole, 2026-11-18).
+    """
+    text = hcl_path.read_text()
+    starts = list(TASK_RE.finditer(text))
+    for i, m in enumerate(starts):
+        body = text[m.end():starts[i + 1].start() if i + 1 < len(starts) else len(text)]
+        if not CONTAINER_DRIVER_RE.search(body):
+            continue
+        memory = MEMORY_RE.search(body)
+        assert memory and int(memory.group(1)) >= CONTAINER_MIN_MEMORY_MB, (
+            f"{hcl_path.name}: container task {m.group(1)!r} needs memory >= "
+            f"{CONTAINER_MIN_MEMORY_MB} MB"
+        )
