@@ -6,7 +6,10 @@ job "guacamole" {
     count = 1
 
     network {
-      port "http"  { static = 8084 }
+      port "http" {
+        static = 8084
+        to     = 8080
+      }
       port "guacd" { static = 4822 }
     }
 
@@ -216,9 +219,10 @@ EOT
         ]
 
         check {
-          name     = "tcp"
-          type     = "tcp"
+          name     = "http"
+          type     = "http"
           port     = "http"
+          path     = "/"
           interval = "30s"
           timeout  = "10s"
         }

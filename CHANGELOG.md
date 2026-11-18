@@ -226,6 +226,11 @@ Newest entries first, grouped by job.
 
 ### 2026-11-18
 
+- **Port mapping fixed: `to = 8080`.** The image's Tomcat listens on 8080,
+  but the driver publishes `static:to` and `to` defaults to the static
+  port, so host 8084 forwarded to an empty container port and Traefik
+  returned 502. The TCP check still passed, because the port forwarder
+  accepts connections with nothing behind it. It's now an HTTP check.
 - **guacd memory 128 → 256 MB.** The first deploy failed on every node:
   Apple `container` won't start a VM below 200 MiB ("minimum memory amount
   allowed"), and Nomad treated the driver failure as unrecoverable, so the
