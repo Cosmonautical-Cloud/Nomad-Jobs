@@ -11,8 +11,8 @@ ready to test, ideally after checking cluster headroom first. See
 
 [Apache Guacamole](https://guacamole.apache.org/) (`guacamole/guacamole:1.6.0`
 + `guacamole/guacd:1.6.0`, container driver) — browser-based VNC access to
-all 5 cluster Macs (`cassiopeia`, `taurus`, `betelgeuse`, `galileo`,
-`hopper`), routed at `guac.cosmonautical.cloud`.
+all 6 cluster Macs (`cassiopeia`, `taurus`, `orion`, `betelgeuse`,
+`galileo`, `hopper`), routed at `guac.cosmonautical.cloud`.
 
 Auth is split: Keycloak OIDC (implicit flow — the `guacamole-auth-sso-openid`
 extension has no client-secret/PKCE support, so the Keycloak client is

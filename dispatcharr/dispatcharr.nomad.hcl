@@ -7,7 +7,7 @@ job "dispatcharr" {
 
     constraint {
       attribute = "${attr.unique.hostname}"
-      value     = "betelgeuse.cosmonautical.cloud"
+      value     = "orion.cosmonautical.cloud"
     }
 
     network {

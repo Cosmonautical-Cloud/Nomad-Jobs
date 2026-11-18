@@ -44,7 +44,7 @@ if you're already editing that section.
 ## Cluster topology — cosmonautical
 
 - Three Nomad + Consul server/client nodes, all macOS/Darwin Mac
-  minis/Studios: `cassiopeia`, `taurus`, `betelgeuse` — reachable via SSH
+  minis/Studios: `cassiopeia`, `taurus`, `orion` — reachable via SSH
   using those short hostnames.
 - **cosmonautical and jellify are datacenters within the same single Nomad
   region** — confirmed via `curl 127.0.0.1:4646/v1/nodes` from `cassiopeia`

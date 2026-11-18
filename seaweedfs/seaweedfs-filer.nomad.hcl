@@ -52,7 +52,7 @@ EOT
           "-ip=${attr.unique.hostname}",
           "-port=8888",
           "-port.grpc=18888",
-          "-master=cassiopeia.cosmonautical.cloud:9333,taurus.cosmonautical.cloud:9333,betelgeuse.cosmonautical.cloud:9333",
+          "-master=cassiopeia.cosmonautical.cloud:9333,taurus.cosmonautical.cloud:9333,orion.cosmonautical.cloud:9333",
           "-defaultReplicaPlacement=001"
         ]
       }

@@ -103,6 +103,7 @@ job "guacamole" {
             SELECT * FROM (VALUES
               ('cassiopeia', '10.10.37.18'),
               ('taurus',     '10.10.37.127'),
+              ('orion',      '10.10.37.27'),
               ('betelgeuse', '10.10.37.193'),
               ('galileo',    '10.10.37.45'),
               ('hopper',     '10.10.37.51')

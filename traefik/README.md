@@ -41,7 +41,7 @@ Notable pieces:
   that bans an IP for 8 such responses within 10 minutes — fail2ban itself
   and the `pf` anchor it needs are provisioned host-side via Nomadintosh,
   not by this job, so the jail must be set up on all three hosts
-  (`cassiopeia`, `taurus`, `betelgeuse`), not just whichever currently runs
+  (`cassiopeia`, `taurus`, `orion`), not just whichever currently runs
   this alloc.
 
 ## Consul KV keys
