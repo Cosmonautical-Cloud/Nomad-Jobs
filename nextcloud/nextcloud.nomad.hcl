@@ -421,7 +421,7 @@ EOT
       }
 
       resources {
-        cpu    = 4
+        cpu    = 128
         memory = 8192
       }
     }
