@@ -59,11 +59,45 @@
       "depNameTemplate": "semaphoreui/semaphore",
       "datasourceTemplate": "github-releases",
       "extractVersionTemplate": "^v?(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "description": "Nextcloud server tarball (download.nextcloud.com, versioned like nextcloud/server's GitHub tags), checksum-pinned in every nextcloud/ job's artifact block; the version also appears in the tar -x line and nextcloud's release= - PRs from this manager need a manual checksum update, see packageRules note",
+      "managerFilePatterns": ["/\\.nomad\\.hcl$/"],
+      "matchStrings": [
+        "nextcloud-(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\\.tar\\.bz2",
+        "release=\"(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\""
+      ],
+      "depNameTemplate": "nextcloud/server",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v?(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "description": "Caddy release tarball, checksum-pinned in the nextcloud job's artifact block - PRs from this manager need a manual checksum update, see packageRules note",
+      "managerFilePatterns": ["/\\.nomad\\.hcl$/"],
+      "matchStrings": [
+        "github\\.com/caddyserver/caddy/releases/download/v(?<currentValue>[0-9.]+)/caddy_[0-9.]+_"
+      ],
+      "depNameTemplate": "caddyserver/caddy",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v?(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "description": "rclone release zip (downloads.rclone.org, versioned like rclone/rclone's GitHub tags), checksum-pinned in nextcloud-s3-backup's artifact block - PRs from this manager need a manual checksum update, see packageRules note",
+      "managerFilePatterns": ["/\\.nomad\\.hcl$/"],
+      "matchStrings": [
+        "downloads\\.rclone\\.org/v(?<currentValue>[0-9.]+)/rclone-v[0-9.]+-"
+      ],
+      "depNameTemplate": "rclone/rclone",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v?(?<version>.*)$"
     }
   ],
   "packageRules": [
     {
-      "matchDepNames": ["keycloak/keycloak", "Lidarr/Lidarr", "slskd/slskd", "semaphoreui/semaphore"],
+      "matchDepNames": ["keycloak/keycloak", "Lidarr/Lidarr", "slskd/slskd", "semaphoreui/semaphore", "nextcloud/server", "caddyserver/caddy", "rclone/rclone"],
       "prBodyNotes": [
         "This manager only tracks the release version - it can't recompute the sha256 checksum the job spec's `artifact`/bootstrap script verifies against. Do **not** merge this PR as-is: use it as a signal that a release exists, then update the download URL and checksum by hand (download the new release, compute its sha256, update both in the `.nomad.hcl` file), same as past version bumps recorded in `CHANGELOG.md`."
       ]
