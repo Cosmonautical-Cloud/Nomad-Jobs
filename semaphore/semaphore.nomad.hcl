@@ -41,7 +41,7 @@ job "semaphore" {
         data        = <<-EOT
         {
           "postgres": {
-            "host": "{{ range service "postgres" }}{{ .Address }}:{{ .Port }}{{ end }}",
+            "host": "postgres.service.consul:5432",
             "user": "semaphore",
             "pass": "{{ key "semaphore/DB_PASSWORD" }}",
             "name": "semaphore",
