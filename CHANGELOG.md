@@ -32,6 +32,18 @@ Newest entries first, grouped by job.
 
 ## repo-wide
 
+### 2026-11-20
+
+- **Renovate now tracks Nextcloud, Caddy and rclone.** They're
+  checksum-pinned downloads like Keycloak/Lidarr/slskd/Semaphore, but no
+  custom manager matched them, so Renovate never saw them at all. Each now
+  has a `github-releases` regex manager (`nextcloud/server`,
+  `caddyserver/caddy`, `rclone/rclone`) and gets the same "update the
+  checksum by hand" PR note. The Nextcloud manager matches every
+  `nextcloud-X.Y.Z.tar.bz2` plus `release="X.Y.Z"`, so one PR bumps all
+  five `nextcloud/` jobs. 34.0.6 is already the newest 34.x, so the first
+  PR will be the 35.0.3 major.
+
 ### 2026-11-18
 
 - **Semaphore 2.20.23 actually deploys.** Renovate #20 was merged as-is,
