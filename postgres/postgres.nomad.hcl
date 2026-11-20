@@ -84,6 +84,7 @@ bootstrap:
         max_wal_senders: 10
         max_replication_slots: 10
         wal_keep_size: 512MB
+        shared_buffers: 256MB
   initdb:
     - encoding: UTF8
     - data-checksums
