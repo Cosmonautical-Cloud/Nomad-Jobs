@@ -12,6 +12,15 @@ Newest entries first, grouped by job.
 
 ## nextcloud
 
+### 2026-11-20
+
+- **Nextcloud 34.0.6 → 35.0.3 (major), with its checksum.** Renovate #27
+  was merged as-is despite its PR note, so it bumped the version but left
+  34.0.6's sha256. Job v85 then failed every artifact download, with v84
+  already stopped, so Nextcloud was down. The new checksum matches
+  upstream's `nextcloud-35.0.3.tar.bz2.sha256`. 35 supports PHP 8.3-8.5
+  (the job uses 8.4) and upgrades from 34.0.
+
 ### 2026-11-18
 
 - **Version bumps now actually upgrade the server.** `start.sh` only

@@ -64,7 +64,7 @@ job "nextcloud-roms-scan" {
         mode        = "file"
 
         options {
-          checksum = "sha256:1ecede06e7be89388c8c117eb2b7fe27a8b5171d2f5a57c6bc3247281a566389"
+          checksum = "sha256:58401440ce81b7f8d445a8c2a8027572b616ef83592f96b121fd15ec8a1aed35"
         }
       }
 

@@ -27,7 +27,7 @@ config/custom-apps on a separate persistent path
 (`/Volumes/Cosmonautical/nextcloud/persistent`), synced back from local
 ephemeral disk every 5 minutes.
 
-Nextcloud version `34.0.6`, downloaded and checksum-verified via an
+Nextcloud version `35.0.3`, downloaded and checksum-verified via an
 `artifact` block on every deploy. Caddy `2.11.9` (mac_arm64 build), same
 pattern.
 
