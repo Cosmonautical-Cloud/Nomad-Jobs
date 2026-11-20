@@ -12,8 +12,8 @@ job "nextcloud-cron" {
       driver = "raw_exec"
 
       artifact {
-        source      = "https://download.nextcloud.com/server/releases/nextcloud-34.0.6.tar.bz2?archive=false"
-        destination = "local/nextcloud-34.0.6.tar.bz2"
+        source      = "https://download.nextcloud.com/server/releases/nextcloud-35.0.3.tar.bz2?archive=false"
+        destination = "local/nextcloud-35.0.3.tar.bz2"
         mode        = "file"
 
         options {
@@ -57,7 +57,7 @@ app="$NEXTCLOUD_APP_DIR"
 persistent="/Volumes/Cosmonautical/nextcloud/persistent"
 
 mkdir -p "${NOMAD_ALLOC_DIR}/data"
-/usr/bin/tar -xjf "$NOMAD_TASK_DIR/nextcloud-34.0.6.tar.bz2" -C "${NOMAD_ALLOC_DIR}/data"
+/usr/bin/tar -xjf "$NOMAD_TASK_DIR/nextcloud-35.0.3.tar.bz2" -C "${NOMAD_ALLOC_DIR}/data"
 
 rm -rf "$app/config" "$app/custom_apps"
 ln -s "$persistent/config" "$app/config"
