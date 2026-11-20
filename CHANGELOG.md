@@ -333,6 +333,17 @@ Newest entries first, grouped by job.
     `semaphore` carry above-average blast radius (auth; the eventual CI
     system for this repo) if an import or plan goes wrong.
 
+## postgres
+
+### 2026-11-20
+
+- **`shared_buffers` 128MB → 256MB**, as Nextcloud 35's admin overview
+  recommends. Applied live with `PATCH /config` on Patroni's REST API
+  (cluster-wide, stored in Consul), then a rolling `POST /restart`:
+  replicas first, waiting for `streaming`, then the primary. Leader
+  (orion) didn't change. It's also in `bootstrap.dcs` here, but that block
+  only seeds a brand-new cluster; for a live one, change it in the DCS.
+
 ## postgres / postgres-backup / redis / traefik / seaweedfs / seaweedfs-filer / seaweedfs-nfs-backup
 
 ### 2026-09-30
