@@ -39,6 +39,22 @@ Newest entries first, grouped by job.
   re-extracted by hand. The check grace has to outlast the upgrade, or
   `check_restart` kills it the same way.
 
+## semaphore
+
+### 2026-11-20
+
+- **Semaphore follows a Patroni failover.** `config.json` held the
+  primary's literal IP, rendered by the `bootstrap` prestart task, which
+  never re-renders. When postgres v28 (the `shared_buffers` bootstrap
+  change) replaced all three Patroni allocs, the primary moved orion →
+  taurus. Semaphore kept writing to orion and failed with `cannot execute
+  ... in a read-only transaction` until its alloc was restarted by hand. It
+  now uses `postgres.service.consul:5432`, like Keycloak and Dispatcharr.
+  Consul DNS returns only the member whose `primary` check passes, and
+  every new connection re-resolves it. The other Postgres-backed jobs
+  render the address in their main task, so a failover re-renders the
+  template and restarts them onto the new primary.
+
 ## repo-wide
 
 ### 2026-11-20
