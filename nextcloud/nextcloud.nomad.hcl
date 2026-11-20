@@ -19,8 +19,8 @@ job "nextcloud" {
       driver = "raw_exec"
 
       artifact {
-        source      = "https://download.nextcloud.com/server/releases/nextcloud-34.0.6.tar.bz2?archive=false"
-        destination = "local/nextcloud-34.0.6.tar.bz2"
+        source      = "https://download.nextcloud.com/server/releases/nextcloud-35.0.3.tar.bz2?archive=false"
+        destination = "local/nextcloud-35.0.3.tar.bz2"
         mode        = "file"
 
         options {
@@ -262,7 +262,7 @@ fpm_health_socket="$NOMAD_ALLOC_DIR/php-fpm-health.sock"
 fpm_ui_socket="$NOMAD_ALLOC_DIR/php-fpm-ui.sock"
 fpm_downloads_socket="$NOMAD_ALLOC_DIR/php-fpm-downloads.sock"
 fpm_pid_file="$NOMAD_ALLOC_DIR/php-fpm.pid"
-release="34.0.6"
+release="35.0.3"
 
 if ! grep -qs "OC_VersionString = '$release';" "$app/version.php"; then
   rm -rf "$app"
