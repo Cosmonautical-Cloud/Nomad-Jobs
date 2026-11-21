@@ -1,3 +1,44 @@
+# Rendered by both tasks. The Postgres address comes from Consul's catalog
+# (only the Patroni primary passes the "postgres" service's checks), not from
+# postgres.service.consul: Semaphore's Go resolver ignores macOS's
+# /etc/resolver/consul and asks the LAN's DNS server, which can't resolve
+# .consul. In the main task, a failover re-renders the file and restarts
+# Semaphore onto the new primary.
+locals {
+  semaphore_config = <<-EOT
+  {
+    "postgres": {
+      "host": "{{ range service "postgres" }}{{ .Address }}:{{ .Port }}{{ end }}",
+      "user": "semaphore",
+      "pass": "{{ key "semaphore/DB_PASSWORD" }}",
+      "name": "semaphore",
+      "options": {
+        "sslmode": "disable"
+      }
+    },
+    "dialect": "postgres",
+
+    "port": ":3000",
+    "web_host": "https://semaphore.cosmonautical.cloud",
+    "tmp_path": "/opt/nomad/semaphore-tmp",
+
+    "cookie_hash": "{{ key "semaphore/COOKIE_HASH" }}",
+    "cookie_encryption": "{{ key "semaphore/COOKIE_ENCRYPTION" }}",
+    "access_key_encryption": "{{ key "semaphore/ACCESS_KEY_ENCRYPTION" }}",
+
+    "oidc_providers": {
+      "keycloak": {
+        "display_name": "Sign in with Cosmonautical",
+        "provider_url": "https://auth.cosmonautical.cloud/realms/cosmonautical",
+        "client_id": "semaphore",
+        "client_secret": "{{ key "semaphore/OIDC_CLIENT_SECRET" }}",
+        "redirect_url": "https://semaphore.cosmonautical.cloud/api/auth/oidc/keycloak/redirect"
+      }
+    }
+  }
+  EOT
+}
+
 job "semaphore" {
   datacenters = ["cosmonautical"]
   type        = "service"
@@ -24,8 +65,8 @@ job "semaphore" {
     #      fetch-jdk) - skipped once already present.
     #   3. fetches the Semaphore binary itself, checksum-pinned, into this
     #      allocation's shared alloc dir so the main task can exec it.
-    #   4. renders config.json (Postgres + OIDC + secrets) into the same
-    #      shared location.
+    #   4. renders config.json (Postgres + OIDC + secrets) for the user
+    #      commands below. The main task renders its own copy.
     #   5. provisions violet as an external (OIDC-only) admin account, plus
     #      a local break-glass admin for if Keycloak is ever unreachable -
     #      both skipped if they already exist.
@@ -38,38 +79,7 @@ job "semaphore" {
       }
 
       template {
-        data        = <<-EOT
-        {
-          "postgres": {
-            "host": "postgres.service.consul:5432",
-            "user": "semaphore",
-            "pass": "{{ key "semaphore/DB_PASSWORD" }}",
-            "name": "semaphore",
-            "options": {
-              "sslmode": "disable"
-            }
-          },
-          "dialect": "postgres",
-
-          "port": ":3000",
-          "web_host": "https://semaphore.cosmonautical.cloud",
-          "tmp_path": "/opt/nomad/semaphore-tmp",
-
-          "cookie_hash": "{{ key "semaphore/COOKIE_HASH" }}",
-          "cookie_encryption": "{{ key "semaphore/COOKIE_ENCRYPTION" }}",
-          "access_key_encryption": "{{ key "semaphore/ACCESS_KEY_ENCRYPTION" }}",
-
-          "oidc_providers": {
-            "keycloak": {
-              "display_name": "Sign in with Cosmonautical",
-              "provider_url": "https://auth.cosmonautical.cloud/realms/cosmonautical",
-              "client_id": "semaphore",
-              "client_secret": "{{ key "semaphore/OIDC_CLIENT_SECRET" }}",
-              "redirect_url": "https://semaphore.cosmonautical.cloud/api/auth/oidc/keycloak/redirect"
-            }
-          }
-        }
-        EOT
+        data        = local.semaphore_config
         destination = "secrets/config.json"
       }
 
@@ -109,19 +119,17 @@ job "semaphore" {
           chmod 755 "$bin_dir/semaphore"
         fi
 
-        cp "$NOMAD_SECRETS_DIR/config.json" "$bin_dir/config.json"
-
-        if ! "$bin_dir/semaphore" user get --login violet --config "$bin_dir/config.json" >/dev/null 2>&1; then
+        if ! "$bin_dir/semaphore" user get --login violet --config "$NOMAD_SECRETS_DIR/config.json" >/dev/null 2>&1; then
           "$bin_dir/semaphore" user add --external --admin \
             --login violet --email "violet@cosmonautical.cloud" --name "Violet" \
-            --config "$bin_dir/config.json"
+            --config "$NOMAD_SECRETS_DIR/config.json"
         fi
 
-        if ! "$bin_dir/semaphore" user get --login admin --config "$bin_dir/config.json" >/dev/null 2>&1; then
+        if ! "$bin_dir/semaphore" user get --login admin --config "$NOMAD_SECRETS_DIR/config.json" >/dev/null 2>&1; then
           "$bin_dir/semaphore" user add --admin \
             --login admin --email "admin@cosmonautical.cloud" --name "Break-glass admin" \
             --password "{{ key "semaphore/BOOTSTRAP_ADMIN_PASSWORD" }}" \
-            --config "$bin_dir/config.json"
+            --config "$NOMAD_SECRETS_DIR/config.json"
         fi
         EOT
         destination = "secrets/bootstrap.sh"
@@ -143,7 +151,12 @@ job "semaphore" {
 
       config {
         command = "${NOMAD_ALLOC_DIR}/semaphore/semaphore"
-        args    = ["server", "--config", "${NOMAD_ALLOC_DIR}/semaphore/config.json"]
+        args    = ["server", "--config", "${NOMAD_SECRETS_DIR}/config.json"]
+      }
+
+      template {
+        data        = local.semaphore_config
+        destination = "secrets/config.json"
       }
 
       env {
