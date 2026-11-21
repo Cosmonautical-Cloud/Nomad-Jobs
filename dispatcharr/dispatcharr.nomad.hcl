@@ -29,7 +29,8 @@ job "dispatcharr" {
           "/Volumes/Cosmonautical/dispatcharr-backups:/data/backups",
           "/Volumes/Cosmonautical/dispatcharr-recordings:/data/recordings",
           "/Volumes/Cosmonautical/dispatcharr-uploads:/data/uploads",
-          "/Volumes/Cosmonautical/dispatcharr-plugins:/data/plugins"
+          "/Volumes/Cosmonautical/dispatcharr-plugins:/data/plugins",
+          "/Volumes/Cosmonautical/dispatcharr-vod:/VODS"
         ]
       }
 
@@ -87,7 +88,8 @@ EOT
           "/Volumes/Cosmonautical/dispatcharr-backups:/data/backups",
           "/Volumes/Cosmonautical/dispatcharr-recordings:/data/recordings",
           "/Volumes/Cosmonautical/dispatcharr-uploads:/data/uploads",
-          "/Volumes/Cosmonautical/dispatcharr-plugins:/data/plugins"
+          "/Volumes/Cosmonautical/dispatcharr-plugins:/data/plugins",
+          "/Volumes/Cosmonautical/dispatcharr-vod:/VODS"
         ]
       }
 
