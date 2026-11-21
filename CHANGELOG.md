@@ -10,6 +10,16 @@ repo made.
 
 Newest entries first, grouped by job.
 
+## dispatcharr
+
+### 2026-11-20
+
+- **Mount `/Volumes/Cosmonautical/dispatcharr-vod` at `/VODS`** in both
+  tasks, for the VOD to Media Library plugin's `.strm` output. Both tasks
+  get it because plugin actions can run in either process. It's on NFS so
+  Jellyfin on cassiopeia can read it without a copy step. Same pattern as
+  the existing plugins/recordings mounts.
+
 ## nextcloud
 
 ### 2026-11-20

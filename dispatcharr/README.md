@@ -17,6 +17,11 @@ if `postgres`'s or `redis`'s Consul service naming ever changes.
 Local hot-path data on internal disk (`/Users/violet/dispatcharr-local/data`),
 with NFS-backed volumes for backups/recordings/uploads/plugins.
 
+`/Volumes/Cosmonautical/dispatcharr-vod` is mounted at `/VODS` in both
+tasks. The VOD to Media Library plugin writes `.strm` files there
+(`/VODS/Movies`, `/VODS/Series`, its defaults), and Jellyfin on cassiopeia
+reads them from the same NFS path.
+
 ## Consul KV keys
 
 | Key | Used for |
