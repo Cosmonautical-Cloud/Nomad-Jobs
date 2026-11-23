@@ -17,10 +17,11 @@ Newest entries first, grouped by job.
 - **New job: `mlx_lm.server` 0.32.2 on taurus**, port `11435`, to try MLX
   in place of Ollama. Runs next to `ollama` for now, with both connected in
   Open WebUI. mlx-lm and uv are PyPI wheels fetched by go-getter, and the
-  venv is built by a prestart task, so no Homebrew formula is needed. It
-  starts with `Qwen3.5-9B-4bit` and `gemma-4-e4b-it-4bit`, which mirror
-  Ollama's `qwen3.5:9b` and `gemma4:e4b`. Gemma 4 12B on MLX is
-  `gemma4_unified`, which this mlx-lm can't load. Memory is 8 GB, which
+  venv is built by a prestart task, so no Homebrew formula is needed.
+  Models aren't fetched at deploy time. The server downloads one on its
+  first request, and models are added from Open WebUI's connection Model
+  IDs. Gemma 4 12B on MLX is `gemma4_unified`, which this mlx-lm can't
+  load. Memory is 8 GB, which
   is what taurus has left while Ollama keeps its 8 GB.
 
 ## open-webui

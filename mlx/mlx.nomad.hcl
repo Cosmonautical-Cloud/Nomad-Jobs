@@ -108,38 +108,5 @@ job "mlx" {
 
       kill_timeout = "10s"
     }
-
-    task "fetch-models" {
-      driver = "raw_exec"
-
-      lifecycle {
-        hook    = "poststart"
-        sidecar = false
-      }
-
-      env {
-        HOME    = "/Users/violet"
-        HF_HOME = "/Volumes/WD Black/huggingface"
-        MODELS  = "mlx-community/Qwen3.5-9B-4bit mlx-community/gemma-4-e4b-it-4bit"
-      }
-
-      config {
-        command = "/bin/sh"
-        args = [
-          "-c",
-          <<-EOT
-          set -eu
-          for model in $MODELS; do
-            "$NOMAD_ALLOC_DIR/venv/bin/hf" download "$model"
-          done
-          EOT
-        ]
-      }
-
-      resources {
-        cpu    = 1
-        memory = 256
-      }
-    }
   }
 }
