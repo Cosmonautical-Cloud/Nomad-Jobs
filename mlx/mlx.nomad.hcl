@@ -83,7 +83,7 @@ job "mlx" {
       template {
         destination = "local/ibv_devices.json"
         data        = <<-EOT
-        [[null, "rdma_en2"], ["rdma_en2", null]]
+        [[null, "rdma_en2"], ["rdma_en3", null]]
         EOT
       }
 
@@ -202,7 +202,7 @@ job "mlx" {
       template {
         destination = "local/ibv_devices.json"
         data        = <<-EOT
-        [[null, "rdma_en2"], ["rdma_en2", null]]
+        [[null, "rdma_en2"], ["rdma_en3", null]]
         EOT
       }
 
