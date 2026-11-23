@@ -10,6 +10,38 @@ repo made.
 
 Newest entries first, grouped by job.
 
+## mlx
+
+### 2026-11-23
+
+- **New job: `mlx_lm.server` 0.32.2 on taurus**, port `11435`, to try MLX
+  in place of Ollama. Runs next to `ollama` for now, with both connected in
+  Open WebUI. mlx-lm and uv are PyPI wheels fetched by go-getter, and the
+  venv is built by a prestart task, so no Homebrew formula is needed.
+  Models aren't fetched at deploy time. The server downloads one on its
+  first request, and models are added from Open WebUI's connection Model
+  IDs. Gemma 4 12B on MLX is `gemma4_unified`, which this mlx-lm can't
+  load. Memory is 8 GB, which
+  is what taurus has left while Ollama keeps its 8 GB.
+
+## open-webui
+
+### 2026-11-23
+
+- **0.12.4 → 0.13.4, and no longer pinned to taurus.** It used to run from
+  a hand-made miniconda env on taurus (Python 3.11), with `DATA_DIR`
+  defaulting to that env's `site-packages/open_webui/data`. An `install`
+  prestart now fetches uv and the Open WebUI wheel with go-getter and
+  builds a Python 3.12 venv in the alloc, so any node can run it.
+- **Uploads moved to SeaweedFS S3** (`open-webui` bucket), and `DATA_DIR`
+  moved to the alloc's sticky, migrating ephemeral disk (Chroma, caches).
+  The old file rows hold absolute paths into the conda env, so at cutover
+  the 6 existing uploads are copied to the bucket and their `file.path`
+  rewritten to `s3://open-webui/<filename>`.
+- 0.13.0/0.13.1 include database migrations, so `openwebui` is `pg_dump`ed
+  right before the apply. The old conda env stays on taurus as the
+  rollback path.
+
 ## nextcloud
 
 ### 2026-11-20

@@ -93,11 +93,20 @@
       "depNameTemplate": "rclone/rclone",
       "datasourceTemplate": "github-releases",
       "extractVersionTemplate": "^v?(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "description": "PyPI wheels (open-webui, mlx-lm, uv) fetched by go-getter from files.pythonhosted.org's predictable /packages/<python tag>/<letter>/<project>/ URLs, checksum-pinned in artifact blocks - PRs from this manager need a manual checksum update, see packageRules note",
+      "managerFilePatterns": ["/\\.nomad\\.hcl$/"],
+      "matchStrings": [
+        "files\\.pythonhosted\\.org/packages/py3/[a-z]/(?<depName>[a-z0-9-]+)/[A-Za-z0-9_]+-(?<currentValue>[0-9.]+)-"
+      ],
+      "datasourceTemplate": "pypi"
     }
   ],
   "packageRules": [
     {
-      "matchDepNames": ["keycloak/keycloak", "Lidarr/Lidarr", "slskd/slskd", "semaphoreui/semaphore", "nextcloud/server", "caddyserver/caddy", "rclone/rclone"],
+      "matchDepNames": ["keycloak/keycloak", "Lidarr/Lidarr", "slskd/slskd", "semaphoreui/semaphore", "nextcloud/server", "caddyserver/caddy", "rclone/rclone", "open-webui", "mlx-lm", "uv"],
       "prBodyNotes": [
         "This manager only tracks the release version - it can't recompute the sha256 checksum the job spec's `artifact`/bootstrap script verifies against. Do **not** merge this PR as-is: use it as a signal that a release exists, then update the download URL and checksum by hand (download the new release, compute its sha256, update both in the `.nomad.hcl` file), same as past version bumps recorded in `CHANGELOG.md`."
       ]

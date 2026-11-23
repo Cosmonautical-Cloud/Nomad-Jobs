@@ -40,6 +40,7 @@ datacenter: [`Jellify/Nomad-Jobs`](https://github.com/Jellify-Music/Nomad-Jobs)
 - [`jellyfin`](jellyfin)
 - [`keycloak`](keycloak)
 - [`lidarr`](lidarr)
+- [`mlx`](mlx)
 - [`ollama`](ollama)
 - [`open-webui`](open-webui)
 - [`radarr`](radarr)
@@ -89,6 +90,8 @@ datacenter: [`Jellify/Nomad-Jobs`](https://github.com/Jellify-Music/Nomad-Jobs)
 │   └── keycloak.nomad.hcl
 ├── lidarr/
 │   └── lidarr.nomad.hcl
+├── mlx/
+│   └── mlx.nomad.hcl
 ├── ollama/
 │   └── ollama.nomad.hcl
 ├── open-webui/
