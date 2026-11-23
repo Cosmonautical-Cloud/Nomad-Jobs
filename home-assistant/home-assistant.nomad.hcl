@@ -6,7 +6,7 @@ locals {
   # Shared NFS root for every group's persistent state.
   data_root = "/Volumes/Cosmonautical/home-assistant"
 
-  zigbee2mqtt_version = "2.14.2"
+  zigbee2mqtt_version = "2.14.3"
   ldap3_version       = "2.9.1"
 }
 
@@ -90,7 +90,7 @@ job "home-assistant" {
       driver = "container"
 
       config {
-        image      = "eclipse-mosquitto:2.0.22"
+        image      = "eclipse-mosquitto:2.0.23"
         ports      = ["mqtt"]
         entrypoint = "/bin/sh"
 
@@ -150,7 +150,7 @@ EOT
 
       resources {
         cpu    = 1
-        memory = 64
+        memory = 256
       }
     }
 
@@ -449,7 +449,7 @@ EOT
       driver = "container"
 
       config {
-        image = "ghcr.io/home-assistant/home-assistant:2026.9.4"
+        image = "ghcr.io/home-assistant/home-assistant:2026.11.2"
         ports = ["http"]
 
         volumes = [
@@ -631,7 +631,7 @@ EOT
       driver = "container"
 
       config {
-        image      = "nodered/node-red:5.0.7"
+        image      = "nodered/node-red:5.0.10"
         ports      = ["http"]
         entrypoint = "/bin/sh"
 
@@ -645,7 +645,7 @@ EOT
           cd /data
           npm install --cache /data/.npm --omit=dev --no-audit --no-fund \
             passport-openidconnect@0.1.2 \
-            node-red-contrib-home-assistant-websocket@0.81.0
+            node-red-contrib-home-assistant-websocket@0.83.0
           cd /usr/src/node-red
           exec ./entrypoint.sh
           EOT

@@ -5,9 +5,9 @@ Each group can land on a different node:
 
 | Group | Tasks | Placement |
 |---|---|---|
-| `mqtt` | `mosquitto` (`eclipse-mosquitto:2.0.22`, container), `zigbee2mqtt` 2.14.2 (raw_exec, Homebrew `node@24`) | `iot` inventory-group hosts that publish a Zigbee adapter in node meta |
-| `home-assistant` | `home-assistant` (`ghcr.io/home-assistant/home-assistant:2026.9.4`, container) at `casa.cosmonautical.cloud` | any cosmonautical node |
-| `node-red` | `node-red` (`nodered/node-red:5.0.7`, container) at `node-red.cosmonautical.cloud` | any cosmonautical node |
+| `mqtt` | `mosquitto` (`eclipse-mosquitto:2.0.23`, container), `zigbee2mqtt` 2.14.3 (raw_exec, Homebrew `node@24`) | `iot` inventory-group hosts that publish a Zigbee adapter in node meta |
+| `home-assistant` | `home-assistant` (`ghcr.io/home-assistant/home-assistant:2026.11.2`, container) at `casa.cosmonautical.cloud` | any cosmonautical node |
+| `node-red` | `node-red` (`nodered/node-red:5.0.10`, container) at `node-red.cosmonautical.cloud` | any cosmonautical node |
 
 **Startup order.** The order is mqtt, then home-assistant, then node-red.
 Nomad starts a job's groups in parallel, so each downstream group has a

@@ -190,6 +190,20 @@ Newest entries first, grouped by job.
 
 ## home-assistant
 
+### 2026-11-23
+
+- **Version bumps before first deploy:** Home Assistant 2026.9.4 →
+  2026.11.2, Node-RED 5.0.7 → 5.0.10, zigbee2mqtt 2.14.2 → 2.14.3 (still
+  supports Node 24), Mosquitto 2.0.22 → 2.0.23,
+  `node-red-contrib-home-assistant-websocket` 0.81.0 → 0.83.0. The
+  2026.10/2026.11 breaking changes don't touch this job. It doesn't use the
+  removed legacy mode of the `homeassistant` auth provider, and it has no
+  YAML-defined MQTT entities. Mosquitto stays on 2.0.x for now; 2.1 is a
+  separate bump.
+- **Mosquitto memory 64 → 256 MB.** Apple `container` refuses VMs under
+  200 MiB, so it would have failed its first start, the same way guacd did.
+  The memory-floor convention test caught it after the rebase.
+
 ### 2026-10-05
 
 - **New job: Home Assistant, Node-RED, Mosquitto and zigbee2mqtt.** These
