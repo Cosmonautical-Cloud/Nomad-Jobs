@@ -1,25 +1,36 @@
 # home-assistant
 
-The Home Assistant stack as one job, `home-assistant`, with three groups.
+The Home Assistant stack as one job, `home-assistant`, with five groups.
 Each group can land on a different node:
 
 | Group | Tasks | Placement |
 |---|---|---|
-| `mqtt` | `mosquitto` (`eclipse-mosquitto:2.0.23`, container), `zigbee2mqtt` 2.14.3 (raw_exec, Homebrew `node@24`) | `iot` inventory-group hosts that publish a Zigbee adapter in node meta |
+| `mqtt` | `mosquitto` (`eclipse-mosquitto:2.0.23`, container) | any cosmonautical node |
+| `zigbee2mqtt` | `zigbee2mqtt` 2.14.3 (raw_exec, Node 24 from nodejs.org) | `iot` inventory-group hosts that publish a Zigbee adapter in node meta |
 | `home-assistant` | `home-assistant` (`ghcr.io/home-assistant/home-assistant:2026.11.2`, container) at `casa.cosmonautical.cloud` | any cosmonautical node |
 | `node-red` | `node-red` (`nodered/node-red:5.0.10`, container) at `node-red.cosmonautical.cloud` | any cosmonautical node |
+| `esphome` | `esphome` (ESPHome Device Builder 1.28.1 + ESPHome 2026.11.0, raw_exec) at `esphome.cosmonautical.cloud` | any Apple silicon cosmonautical node |
 
-**Startup order.** The order is mqtt, then home-assistant, then node-red.
-Nomad starts a job's groups in parallel, so each downstream group has a
-`wait-for-*` prestart task. It polls the local Consul agent until the
-upstream service (`mqtt` or `home-assistant`) has a passing health check. On
-a fresh deploy Home Assistant waits for the broker, and Node-RED waits for
-Home Assistant. If a group is rescheduled later, only that group restarts.
+**Startup order.** mqtt comes first. zigbee2mqtt and home-assistant both
+wait for it, and node-red waits for home-assistant. esphome depends on nothing and starts right away. Nomad starts a job's
+groups in parallel, so each downstream group has a `wait-for-*` prestart
+task. It polls the local Consul agent until the upstream service (`mqtt` or
+`home-assistant`) has a passing health check. If a group is rescheduled later, only that group restarts.
 
-All persistent state is on the NFS share under
+Persistent state is on the NFS share under
 `/Volumes/Cosmonautical/home-assistant/`, in `config/`, `mosquitto/`,
-`zigbee2mqtt/` and `node-red/`. A group can therefore move between nodes,
-except `mqtt`, which stays on the host with the USB adapter. Home Assistant's
+`node-red/` and `esphome/`, so those groups can move between nodes.
+zigbee2mqtt is the exception: it only runs on the host with the USB adapter,
+so its state stays on that host's disk at
+`/Users/violet/zigbee2mqtt-local/data`, and that host doesn't need the NFS
+share.
+
+**Finding the broker.** Mosquitto isn't pinned to a node. Its port is
+static (1883) so that a Consul DNS lookup, which returns only an address, is
+enough to reach it. Home Assistant and Node-RED use `mqtt.service.consul:1883`,
+and their containers resolve it through the host's `/etc/resolver/consul`.
+zigbee2mqtt gets the broker's address and port from a Consul template
+instead, and restarts if Mosquitto moves. Home Assistant's
 recorder history goes to the shared Postgres cluster (database
 `homeassistant`) rather than SQLite, because SQLite over NFS isn't safe to
 lock.
@@ -27,42 +38,85 @@ lock.
 ## Why zigbee2mqtt runs on the host
 
 Apple's `container` runs each container in its own VM, with no USB
-passthrough. zigbee2mqtt has to open the adapter's serial device, so it runs
-natively under `raw_exec`. The `prepare` prestart task `npm install`s it into
-the alloc dir. Mosquitto is a normal container, and zigbee2mqtt reaches it
-on `127.0.0.1:1883`. That works because published container ports listen on
-every host interface, and a loopback address keeps Homebrew's `node` clear of
-macOS's Local Network permission prompt.
+passthrough, and it only runs on Apple silicon. zigbee2mqtt has to open the
+adapter's serial device, so it runs natively under `raw_exec`, which also
+lets it run on an Intel Mac. The `prepare` prestart task downloads Node
+(`node_version`, the `darwin-x64` or `darwin-arm64` build to match the host)
+from nodejs.org, checks it against `SHASUMS256.txt`, and `npm install`s
+zigbee2mqtt into the alloc dir. Nothing from Homebrew is needed.
+
+zigbee2mqtt connects to Mosquitto over the LAN. `raw_exec` tasks inherit the
+`nomad` binary's macOS Local Network permission, so approve `nomad`'s prompt
+on that host's screen when it first joins the cluster.
 
 zigbee2mqtt takes its whole configuration from `ZIGBEE2MQTT_CONFIG_*` env
-vars and writes it into `zigbee2mqtt/configuration.yaml` on start. The
+vars and writes it into `configuration.yaml` in its data dir on start. The
 Zigbee network key and PAN IDs are `GENERATE`d on the first start and
 persisted there. **Don't delete that file.** Losing the network key means
-re-pairing every device. Its frontend is LAN-only (no Traefik route), at the
+re-pairing every device. It's on hubble's local disk, not NFS, so it's only
+backed up if hubble is: copy `configuration.yaml` and `database.db`
+somewhere safe after pairing. Its frontend is LAN-only (no Traefik route), at the
 `zigbee2mqtt` Consul service's address. It's protected by
 `ZIGBEE2MQTT_FRONTEND_TOKEN`. Pairing can also be started from Home
 Assistant's "Permit join" switch, which zigbee2mqtt exposes over MQTT
 discovery.
 
+## ESPHome
+
+The dashboard is ESPHome Device Builder. As of ESPHome 2026.11,
+`esphome dashboard` only prints a pointer to it, so the `prepare` prestart
+task creates a venv in the alloc dir with Homebrew's `python@3.14` and
+`pip install`s both pinned packages (`esphome_version` and
+`esphome_device_builder_version`). It names `python@3.14` explicitly
+because that's the version Patroni's venv already uses on every host, and
+the install was tested with it. Homebrew's default `python3` is now 3.15.
+
+It runs under `raw_exec` rather than the `ghcr.io/esphome/esphome` image
+because the container VM's NAT hides mDNS. Natively, the dashboard can see
+which devices are online and push OTA updates to `<name>.local` without
+every device needing a static IP or `use_address`. Firmware also compiles
+natively, on the host's own CPU. The constraint keeps it on Apple silicon,
+because the task uses Homebrew's `/opt/homebrew` paths.
+
+- **Device YAMLs** (and `secrets.yaml` for Wi-Fi credentials) live on NFS
+  under `esphome/`, so the group can move between nodes.
+- **Build output** goes to `ESPHOME_DATA_DIR` in the alloc dir. It's only a
+  cache, so the first compile after a reschedule is slower. PlatformIO's
+  toolchains download once per host into `~/.platformio`.
+- **Login** is the dashboard's own: user `admin`, password
+  `home-assistant/ESPHOME_PASSWORD`. Device Builder has no SSO. Anyone who
+  gets in can flash firmware onto every device, so use a strong password.
+- **Behind Traefik**, the WebSocket `Origin` check passes because Traefik
+  forwards the public `Host` header, so `--trusted-domains` isn't needed.
+  HTTPS also lets the browser's Web Serial "plug into this computer" flash
+  a new board over USB.
+- **Local Network permission** works the same way as zigbee2mqtt: the task
+  inherits `nomad`'s. A rolling Nomad restart cuts off running raw_exec
+  tasks' LAN access, so restart this task afterwards if OTA uploads start
+  failing with `no route to host`.
+
+Each device then shows up in Home Assistant through the **ESPHome**
+integration, which talks to the device directly (not through this
+dashboard). Home Assistant's container can't see mDNS, so add each device
+there by IP.
+
 ## Host prerequisites (Nomadable)
 
-No host qualifies for the `mqtt` group yet, so that group stays unplaced
-until one does. On the Mac with the Zigbee coordinator plugged in:
+No host qualifies for the `zigbee2mqtt` group yet, so that group stays
+unplaced until one does. It's meant for `hubble`, the 2012 Intel Mac mini
+(macOS Sequoia). It runs only Consul and a client-only Nomad agent: no
+`server`, and no `container`, `docker` or `podman` driver, so Nomad never
+places the container groups there. It doesn't need the NFS share or
+Homebrew's `node`. Nomadintosh still installs Consul and Nomad through
+Homebrew, which goes in `/usr/local` on Intel, so set
+`homebrew_dir: /usr/local` in hubble's host vars. On the Mac with the Zigbee
+coordinator plugged in:
 
 1. **Put it in an `iot` inventory group** (Semaphore's static inventory too).
    Nomadintosh publishes inventory groups as `meta.inventory_groups`. The
    cosmonautical hosts don't publish that key yet, so they need a Nomadable
    run on a Nomadintosh version that does.
-2. **Install `node@24`** for that group. zigbee2mqtt 2.14 supports Node
-   22, 24 and up to 26.2, but Homebrew's unversioned `node` is already newer
-   than that. Add `group_vars/iot.yml`:
-
-   ```yaml
-   additional_homebrew_packages__iot:
-     - node@24
-   ```
-
-3. **Publish the adapter in node meta** through that host's vars:
+2. **Publish the adapter in node meta** through that host's vars:
 
    ```yaml
    nomad_client_meta__zigbee:
@@ -73,9 +127,9 @@ until one does. On the Mac with the Zigbee coordinator plugged in:
    `zigbee_adapter_type` is zigbee2mqtt's `serial.adapter`. For example,
    Sonoff's ZBDongle-E is `ember` and its ZBDongle-P is `zstack`.
 
-Until those three are in place, the `mqtt` group shows as a placement
-failure, and `home-assistant`/`node-red` sit in their `wait-for-*` prestart
-tasks. That's harmless, but the job's deployment won't go healthy.
+Until both are in place, the `zigbee2mqtt` group shows as a placement
+failure. The other groups run normally, but the job's deployment won't go
+healthy.
 
 ## Auth
 
@@ -130,8 +184,8 @@ created once if missing and then left to the apps.
 ## After the first deploy
 
 1. Open `casa.cosmonautical.cloud`, complete onboarding (it creates the local
-   owner account), then add the **MQTT** integration with broker = the
-   `mqtt` group's host address, port `1883`, user `homeassistant`, password
+   owner account), then add the **MQTT** integration with broker
+   `mqtt.service.consul`, port `1883`, user `homeassistant`, password
    `home-assistant/MQTT_HOMEASSISTANT_PASSWORD`. Zigbee devices then appear
    through MQTT discovery.
 2. In Home Assistant, create a long-lived access token. Then, in Node-RED,
@@ -152,6 +206,7 @@ manually by IP.
 | `home-assistant/MQTT_NODERED_PASSWORD` | Mosquitto user `nodered`, for any MQTT nodes in Node-RED flows |
 | `home-assistant/ZIGBEE2MQTT_FRONTEND_TOKEN` | zigbee2mqtt frontend auth token |
 | `home-assistant/NODE_RED_OIDC_CLIENT_SECRET` | Keycloak `node-red` client secret |
+| `home-assistant/ESPHOME_PASSWORD` | ESPHome dashboard password for user `admin` |
 | `home-assistant/NODE_RED_CREDENTIAL_SECRET` | Encrypts Node-RED's `flows_cred.json`. **Changing it makes existing flow credentials unreadable.** |
 | `postgres/PATRONI_SUPERUSER_PASSWORD` | Bootstrap: creating the `homeassistant` role/database |
 

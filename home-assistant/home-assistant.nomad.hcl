@@ -1,53 +1,29 @@
-# Home Assistant stack: one job, three groups, each free to land on a
-# different node. Startup order is mqtt -> home-assistant -> node-red, enforced
-# by each downstream group's `wait-for-*` prestart polling Consul health for
-# the service it depends on. See README.md for the full picture.
 locals {
-  # Shared NFS root for every group's persistent state.
   data_root = "/Volumes/Cosmonautical/home-assistant"
 
+  # zigbee2mqtt only ever runs on the host with the coordinator, so its state
+  # (network key, device database) stays on that host's disk instead of NFS.
+  zigbee2mqtt_data = "/Users/violet/zigbee2mqtt-local/data"
+
+  node_version        = "24.22.3"
   zigbee2mqtt_version = "2.14.3"
   ldap3_version       = "2.9.1"
+
+  esphome_version                = "2026.11.0"
+  esphome_device_builder_version = "1.28.1"
 }
 
 job "home-assistant" {
   datacenters = ["cosmonautical"]
   type        = "service"
 
-  # MQTT broker + Zigbee bridge. Pinned to the node with the Zigbee USB
-  # coordinator: hosts in the `iot` inventory group that also publish the
-  # adapter's serial device in node meta (both set through Nomadable - see
-  # README's "Host prerequisites").
   group "mqtt" {
     count = 1
 
-    constraint {
-      attribute = "${meta.inventory_groups}"
-      operator  = "set_contains"
-      value     = "iot"
-    }
-
-    constraint {
-      attribute = "${meta.zigbee_adapter}"
-      operator  = "is_set"
-    }
-
-    constraint {
-      attribute = "${meta.zigbee_adapter_type}"
-      operator  = "is_set"
-    }
-
-    # Static: Home Assistant's MQTT integration is configured in its UI with
-    # a fixed host:port, and containers can't resolve *.service.consul.
     network {
       port "mqtt" { static = 1883 }
-      port "zigbee2mqtt" {}
     }
 
-    # Creates the NFS state directories (the container driver can't bind-mount
-    # a missing path) and installs zigbee2mqtt into the alloc dir. Apple's
-    # container VMs have no USB passthrough, so zigbee2mqtt runs natively on
-    # the host under Homebrew's node@24 rather than in a container.
     task "prepare" {
       driver = "raw_exec"
 
@@ -56,33 +32,21 @@ job "home-assistant" {
         sidecar = false
       }
 
-      env {
-        PATH = "/opt/homebrew/opt/node@24/bin:/usr/bin:/bin"
-      }
-
       config {
         command = "/bin/sh"
         args = [
           "-c",
           <<-EOT
           set -eu
-          # NFS squashes ownership, so open the dirs up for the containers'
-          # own uids (mosquitto runs as 1883).
-          mkdir -p ${local.data_root}/mosquitto/data ${local.data_root}/zigbee2mqtt
+          mkdir -p ${local.data_root}/mosquitto/data
           chmod 0777 ${local.data_root}/mosquitto/data
-
-          prefix="$NOMAD_ALLOC_DIR/zigbee2mqtt"
-          if [ ! -f "$prefix/node_modules/zigbee2mqtt/index.js" ]; then
-            npm install --prefix "$prefix" --omit=dev --no-audit --no-fund \
-              zigbee2mqtt@${local.zigbee2mqtt_version}
-          fi
           EOT
         ]
       }
 
       resources {
         cpu    = 1
-        memory = 512
+        memory = 16
       }
     }
 
@@ -94,9 +58,6 @@ job "home-assistant" {
         ports      = ["mqtt"]
         entrypoint = "/bin/sh"
 
-        # The container driver doesn't mount Nomad's /local or /secrets, so
-        # the config and password file are written inside the container from
-        # env vars. mosquitto_passwd -U hashes the plaintext file in place.
         args = [
           "-c",
           <<-EOT
@@ -153,39 +114,135 @@ EOT
         memory = 256
       }
     }
+  }
+
+  group "zigbee2mqtt" {
+    count = 1
+
+    constraint {
+      attribute = "${meta.inventory_groups}"
+      operator  = "set_contains"
+      value     = "iot"
+    }
+
+    constraint {
+      attribute = "${meta.zigbee_adapter}"
+      operator  = "is_set"
+    }
+
+    constraint {
+      attribute = "${meta.zigbee_adapter_type}"
+      operator  = "is_set"
+    }
+
+    network {
+      port "zigbee2mqtt" {}
+    }
+
+    task "wait-for-mqtt" {
+      driver = "raw_exec"
+
+      lifecycle {
+        hook    = "prestart"
+        sidecar = false
+      }
+
+      config {
+        command = "/bin/sh"
+        args = [
+          "-c",
+          "until curl -fsS 'http://127.0.0.1:8500/v1/health/service/mqtt?passing' | grep -q ServiceID; do sleep 5; done",
+        ]
+      }
+
+      resources {
+        cpu    = 1
+        memory = 16
+      }
+    }
+
+    task "prepare" {
+      driver = "raw_exec"
+
+      lifecycle {
+        hook    = "prestart"
+        sidecar = false
+      }
+
+      config {
+        command = "/bin/sh"
+        args = [
+          "-c",
+          <<-EOT
+          set -eu
+          mkdir -p ${local.zigbee2mqtt_data}
+
+          node_dir="$NOMAD_ALLOC_DIR/node"
+          if [ ! -x "$node_dir/bin/node" ]; then
+            case "$(uname -m)" in
+              x86_64) arch=x64 ;;
+              *) arch=arm64 ;;
+            esac
+            dist="https://nodejs.org/dist/v${local.node_version}"
+            tarball="node-v${local.node_version}-darwin-$arch.tar.gz"
+            cd "$NOMAD_TASK_DIR"
+            curl -fsSLO "$dist/$tarball"
+            curl -fsSL "$dist/SHASUMS256.txt" | grep "  $tarball$" | shasum -a 256 -c -
+            mkdir -p "$node_dir"
+            tar -xzf "$tarball" -C "$node_dir" --strip-components 1
+            rm "$tarball"
+          fi
+          export PATH="$node_dir/bin:/usr/bin:/bin"
+
+          prefix="$NOMAD_ALLOC_DIR/zigbee2mqtt"
+          if [ ! -f "$prefix/node_modules/zigbee2mqtt/index.js" ]; then
+            npm install --prefix "$prefix" --omit=dev --no-audit --no-fund \
+              zigbee2mqtt@${local.zigbee2mqtt_version}
+          fi
+          EOT
+        ]
+      }
+
+      resources {
+        cpu    = 1
+        memory = 512
+      }
+    }
 
     task "zigbee2mqtt" {
       driver = "raw_exec"
 
       config {
-        command = "/opt/homebrew/opt/node@24/bin/node"
+        command = "${NOMAD_ALLOC_DIR}/node/bin/node"
         args    = ["${NOMAD_ALLOC_DIR}/zigbee2mqtt/node_modules/zigbee2mqtt/index.js"]
       }
 
-      # Every setting zigbee2mqtt needs comes from ZIGBEE2MQTT_CONFIG_* env
-      # vars, which it writes back into its configuration.yaml on start.
-      # Z2M_ONBOARD_NO_SERVER skips the first-run setup web page.
       env {
-        ZIGBEE2MQTT_DATA      = "${local.data_root}/zigbee2mqtt"
+        ZIGBEE2MQTT_DATA      = "${local.zigbee2mqtt_data}"
         Z2M_ONBOARD_NO_SERVER = "1"
 
         ZIGBEE2MQTT_CONFIG_SERIAL_PORT    = "${meta.zigbee_adapter}"
         ZIGBEE2MQTT_CONFIG_SERIAL_ADAPTER = "${meta.zigbee_adapter_type}"
 
-        # Mosquitto publishes on every host interface, and 127.0.0.1 keeps
-        # Homebrew node clear of macOS's Local Network permission prompt.
-        ZIGBEE2MQTT_CONFIG_MQTT_SERVER = "mqtt://127.0.0.1:${NOMAD_PORT_mqtt}"
-        ZIGBEE2MQTT_CONFIG_MQTT_USER   = "zigbee2mqtt"
+        ZIGBEE2MQTT_CONFIG_MQTT_USER = "zigbee2mqtt"
 
         ZIGBEE2MQTT_CONFIG_HOMEASSISTANT_ENABLED = "true"
 
         ZIGBEE2MQTT_CONFIG_FRONTEND_ENABLED = "true"
         ZIGBEE2MQTT_CONFIG_FRONTEND_PORT    = "${NOMAD_PORT_zigbee2mqtt}"
 
-        # Generated once on first start, then persisted in configuration.yaml.
         ZIGBEE2MQTT_CONFIG_ADVANCED_NETWORK_KEY = "GENERATE"
         ZIGBEE2MQTT_CONFIG_ADVANCED_PAN_ID      = "GENERATE"
         ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID  = "GENERATE"
+      }
+
+      template {
+        data        = <<EOT
+ZIGBEE2MQTT_CONFIG_MQTT_SERVER=mqtt://{{ range service "mqtt" }}{{ .Address }}:{{ .Port }}{{ end }}
+EOT
+        destination = "local/mqtt.env"
+        env         = true
+        change_mode = "restart"
       }
 
       template {
@@ -197,8 +254,6 @@ EOT
         env         = true
       }
 
-      # Frontend is LAN-only (no Traefik route); pairing can also be started
-      # from Home Assistant's "Permit join" switch.
       service {
         name = "zigbee2mqtt"
         port = "zigbee2mqtt"
@@ -699,6 +754,104 @@ EOT
       resources {
         cpu    = 1
         memory = 512
+      }
+    }
+  }
+
+  group "esphome" {
+    count = 1
+
+    constraint {
+      attribute = "${attr.cpu.arch}"
+      value     = "arm64"
+    }
+
+    network {
+      port "http" {}
+    }
+
+    task "prepare" {
+      driver = "raw_exec"
+
+      lifecycle {
+        hook    = "prestart"
+        sidecar = false
+      }
+
+      config {
+        command = "/bin/sh"
+        args = [
+          "-c",
+          <<-EOT
+          set -eu
+          mkdir -p ${local.data_root}/esphome
+
+          venv="$NOMAD_ALLOC_DIR/esphome"
+          if [ ! -x "$venv/bin/esphome-device-builder" ]; then
+            /opt/homebrew/opt/python@3.14/bin/python3.14 -m venv "$venv"
+            "$venv/bin/pip" install --quiet --disable-pip-version-check \
+              esphome==${local.esphome_version} \
+              esphome-device-builder==${local.esphome_device_builder_version}
+          fi
+          EOT
+        ]
+      }
+
+      resources {
+        cpu    = 1
+        memory = 512
+      }
+    }
+
+    task "esphome" {
+      driver = "raw_exec"
+
+      config {
+        command = "${NOMAD_ALLOC_DIR}/esphome/bin/esphome-device-builder"
+        args = [
+          "${local.data_root}/esphome",
+          "--host", "0.0.0.0",
+          "--port", "${NOMAD_PORT_http}",
+        ]
+      }
+
+      env {
+        PATH             = "${NOMAD_ALLOC_DIR}/esphome/bin:/opt/homebrew/bin:/usr/bin:/bin"
+        ESPHOME_DATA_DIR = "${NOMAD_ALLOC_DIR}/esphome-data"
+        ESPHOME_USERNAME = "admin"
+      }
+
+      template {
+        data        = <<EOT
+ESPHOME_PASSWORD={{ key "home-assistant/ESPHOME_PASSWORD" }}
+EOT
+        destination = "secrets/esphome.env"
+        env         = true
+      }
+
+      service {
+        name = "esphome"
+        port = "http"
+
+        tags = [
+          "traefik.enable=true",
+          "traefik.http.routers.esphome.rule=Host(`esphome.cosmonautical.cloud`)",
+          "traefik.http.routers.esphome.entrypoints=websecure",
+          "traefik.http.routers.esphome.tls.certresolver=cf-dns",
+        ]
+
+        check {
+          name     = "tcp"
+          type     = "tcp"
+          port     = "http"
+          interval = "30s"
+          timeout  = "10s"
+        }
+      }
+
+      resources {
+        cpu    = 2
+        memory = 1536
       }
     }
   }

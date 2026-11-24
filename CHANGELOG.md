@@ -192,6 +192,37 @@ Newest entries first, grouped by job.
 
 ### 2026-11-23
 
+- **New `esphome` group: ESPHome Device Builder at
+  `esphome.cosmonautical.cloud`.** It runs under `raw_exec` from a venv
+  (Homebrew `python@3.14`, ESPHome 2026.11.0, Device Builder 1.28.1)
+  instead of the `ghcr.io/esphome/esphome` container, so mDNS works for
+  device status and OTA by hostname. ESPHome 2026.11 removed the built-in
+  `esphome dashboard`, and Device Builder replaces it. It's
+  password-protected (`home-assistant/ESPHOME_PASSWORD`) because Device
+  Builder has no SSO.
+- **zigbee2mqtt split into its own group, so it can run on an Intel Mac.**
+  The Zigbee coordinator is going on a 2012 Intel Mac mini. Apple
+  `container` only runs on Apple silicon, so Mosquitto couldn't share a
+  group with zigbee2mqtt on that host. `mqtt` now holds only Mosquitto and
+  can run on any cosmonautical node. The new `zigbee2mqtt` group keeps the
+  `iot` and adapter constraints, waits for a healthy `mqtt` service, and
+  reaches the broker at an address rendered from Consul with
+  `change_mode = "restart"`. Its `raw_exec` tasks inherit `nomad`'s Local
+  Network permission, so loopback isn't needed anymore.
+- **zigbee2mqtt's state is local to its host, not on NFS.** It's in
+  `/Users/violet/zigbee2mqtt-local/data`, like dispatcharr's and lidarr's
+  local dirs. The group can only run where the coordinator is plugged in,
+  so NFS bought nothing, and hubble then doesn't need the NFS share at all.
+- **Node for zigbee2mqtt comes from nodejs.org instead of Homebrew.**
+  `prepare` downloads Node 24.22.3 for the host's architecture and checks it
+  against `SHASUMS256.txt`. The hardcoded `/opt/homebrew/opt/node@24` path
+  doesn't exist on Intel Homebrew (`/usr/local`), and Intel Homebrew support
+  is winding down. The `node@24` `group_vars/iot.yml` prerequisite is gone.
+- **Home Assistant's MQTT broker is `mqtt.service.consul:1883`.** The old
+  comment saying containers can't resolve `*.service.consul` was stale.
+  Dispatcharr, Keycloak and Open WebUI all resolve it through
+  `/etc/resolver/consul`. Mosquitto's port stays static because DNS returns
+  only the address.
 - **Version bumps before first deploy:** Home Assistant 2026.9.4 →
   2026.11.2, Node-RED 5.0.7 → 5.0.10, zigbee2mqtt 2.14.2 → 2.14.3 (still
   supports Node 24), Mosquitto 2.0.22 → 2.0.23,
