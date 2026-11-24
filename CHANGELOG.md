@@ -12,6 +12,19 @@ Newest entries first, grouped by job.
 
 ## mlx
 
+### Unreleased
+
+- **Split across taurus and orion over Thunderbolt 5.** The single `mlx`
+  group became `rank0` (taurus, serves the API) and `rank1` (orion), joined
+  by MLX's `jaccl` backend (RDMA over Thunderbolt). This fits models up to
+  roughly twice the size either 24 GB Mac could hold alone. mlx-lm's server
+  shares each request with every rank, so model swapping still works. The
+  distributed env (`MLX_RANK`, `MLX_JACCL_COORDINATOR`, `MLX_IBV_DEVICES`)
+  is set per group rather than with `mlx.launch`, which would start orion's
+  half over SSH outside Nomad. Needs RDMA enabled from Recovery on both and
+  Nomadintosh's `thunderbolt_link` role. Rank 1 reserves 2 GB, as Nomad had
+  ~2.5 GB of orion left to allocate (orion had ~15 GB actually free).
+
 ### 2026-11-23
 
 - **New job: `mlx_lm.server` 0.32.2 on taurus**, port `11435`, to try MLX
