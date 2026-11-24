@@ -1,8 +1,7 @@
 # open-webui
 
 Runs Open WebUI `0.13.4`, the chat UI in front of [`mlx`](../mlx)
-(`mlx.service.consul:11435`, OpenAI-compatible) and
-[`ollama`](../ollama) (`ollama.service.consul`). It's routed at
+(`mlx.service.consul:11435`, OpenAI-compatible). It's routed at
 `ai.jellify.app`. See [`jellyfin`](../jellyfin)'s README for why a
 cosmonautical job serves a `jellify.app` domain. It can run on any
 cosmonautical node.
@@ -31,7 +30,7 @@ Notable pieces:
   caches re-download, and attached documents need re-indexing (Admin
   Settings > Documents > Reindex).
 - **Connections are persisted in the database**, not read from env.
-  `OLLAMA_BASE_URL` here only matters on a fresh database. The MLX
+  `ENABLE_OLLAMA_API = false` here only matters on a fresh database. The MLX
   connection is set in Admin Settings > Connections > OpenAI API
   (`openai.*` keys in the `config` table).
 

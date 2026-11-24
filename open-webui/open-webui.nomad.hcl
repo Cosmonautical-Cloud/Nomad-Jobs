@@ -117,7 +117,7 @@ EOT
         S3_REGION_NAME      = "us-east-1"
         S3_ADDRESSING_STYLE = "path"
 
-        OLLAMA_BASE_URL = "http://ollama.service.consul:11434"
+        ENABLE_OLLAMA_API = "false"
 
         WEBUI_URL           = "https://ai.jellify.app"
         ENABLE_LOGIN_FORM   = "false"

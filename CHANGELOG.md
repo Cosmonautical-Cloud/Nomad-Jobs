@@ -10,6 +10,16 @@ repo made.
 
 Newest entries first, grouped by job.
 
+## ollama
+
+### 2026-11-24
+
+- **Removed.** MLX ([`mlx`](mlx)) replaced it as Open WebUI's model
+  backend, and the job was already gone from the cluster. Dropping its
+  `main.tf` resource keeps the next apply from bringing it back. The
+  Homebrew `ollama` formula on taurus and its models on
+  `/Volumes/WD Black/ollama-models` are left in place.
+
 ## mlx
 
 ### Unreleased
@@ -38,6 +48,13 @@ Newest entries first, grouped by job.
   is what taurus has left while Ollama keeps its 8 GB.
 
 ## open-webui
+
+### 2026-11-24
+
+- **Ollama connection dropped** with the `ollama` job:
+  `OLLAMA_BASE_URL` is gone and `ENABLE_OLLAMA_API = "false"`. Both only
+  seed a fresh database. On the running instance, turn the Ollama API off
+  in Admin Settings > Connections.
 
 ### 2026-11-23
 
