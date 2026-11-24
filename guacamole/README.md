@@ -3,7 +3,7 @@
 [Apache Guacamole](https://guacamole.apache.org/) (`guacamole/guacamole:1.6.0`
 + `guacamole/guacd:1.6.0`, container driver) — browser-based VNC access to
 the cluster Macs (`cassiopeia`, `taurus`, `orion`, `lovelace`, `galileo`,
-`hopper`), routed at `guac.cosmonautical.cloud`. **Senior Cosmonauts only.**
+`hopper`, `hubble`), routed at `guac.cosmonautical.cloud`. **Senior Cosmonauts only.**
 
 First deployed 2026-11-18. An earlier attempt on 2026-09-30 got stuck
 unscheduled and was pulled from `main.tf`; see `CHANGELOG.md`.

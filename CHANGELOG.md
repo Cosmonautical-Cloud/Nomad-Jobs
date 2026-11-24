@@ -306,6 +306,13 @@ Newest entries first, grouped by job.
 
 ## guacamole
 
+### 2026-11-24
+
+- **`hubble` VNC connection.** The Intel Mac mini with the Zigbee
+  coordinator (10.10.37.67), for approving its CP210x driver extension
+  and other on-screen prompts. It isn't in Consul or Nomad yet, but
+  Screen Sharing doesn't need either.
+
 ### 2026-11-18
 
 - **Port mapping fixed: `to = 8080`.** The image's Tomcat listens on 8080,
