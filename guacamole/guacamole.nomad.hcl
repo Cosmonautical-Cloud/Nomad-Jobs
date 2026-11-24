@@ -102,7 +102,8 @@ job "guacamole" {
               ('orion',      '10.10.37.27'),
               ('lovelace',   '10.10.37.193'),
               ('galileo',    '10.10.37.45'),
-              ('hopper',     '10.10.37.51')
+              ('hopper',     '10.10.37.51'),
+              ('hubble',     '10.10.37.67')
             ) AS t(name, ip)
           LOOP
             SELECT connection_id INTO conn_id FROM guacamole_connection
