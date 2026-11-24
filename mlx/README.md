@@ -37,9 +37,8 @@ Notable pieces:
 - **The two halves fail together.** If rank 1 dies, rank 0's generation
   thread fails, `/health` returns 503, and `check_restart` restarts it.
   Rank 1 retries (`restart` in `delay` mode) until rank 0 is back.
-- **Memory.** Each host holds half the model. Ollama (8 GB) still runs on
-  taurus. Rank 1 reserves only 2 GB in Nomad, since Nomad has little of
-  orion left to hand out. raw_exec memory isn't enforced on macOS, and orion
+- **Memory.** Each host holds half the model. Rank 1 reserves only 2 GB in
+  Nomad, since Nomad has little of orion left to hand out. raw_exec memory isn't enforced on macOS, and orion
   has far more free in practice.
 - **One model is loaded at a time.** Each request names its model, and the
   server swaps when it changes. `/v1/models` lists only cached repos that

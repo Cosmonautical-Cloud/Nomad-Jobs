@@ -41,7 +41,6 @@ datacenter: [`Jellify/Nomad-Jobs`](https://github.com/Jellify-Music/Nomad-Jobs)
 - [`keycloak`](keycloak)
 - [`lidarr`](lidarr)
 - [`mlx`](mlx)
-- [`ollama`](ollama)
 - [`open-webui`](open-webui)
 - [`radarr`](radarr)
 - [`romm`](romm)
@@ -92,8 +91,6 @@ datacenter: [`Jellify/Nomad-Jobs`](https://github.com/Jellify-Music/Nomad-Jobs)
 │   └── lidarr.nomad.hcl
 ├── mlx/
 │   └── mlx.nomad.hcl
-├── ollama/
-│   └── ollama.nomad.hcl
 ├── open-webui/
 │   └── open-webui.nomad.hcl
 ├── radarr/
@@ -172,7 +169,7 @@ unit:
 - [`seaweedfs/`](seaweedfs) — `seaweedfs`, `seaweedfs-filer`,
   `seaweedfs-nfs-backup`
 
-Related-but-independent apps (e.g. `ollama`/`open-webui`, or the \*arr and
+Related-but-independent apps (e.g. `mlx`/`open-webui`, or the \*arr and
 download apps) stay in their own directories — a stack folder is for one
 app's jobs, not a category. The five jobs' schedules
 are deliberately staggered against each other and against the main service's
