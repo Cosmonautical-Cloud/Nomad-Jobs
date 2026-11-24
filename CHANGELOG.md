@@ -209,6 +209,11 @@ Newest entries first, grouped by job.
   reaches the broker at an address rendered from Consul with
   `change_mode = "restart"`. Its `raw_exec` tasks inherit `nomad`'s Local
   Network permission, so loopback isn't needed anymore.
+- **zigbee2mqtt uses the deprecated `ezsp` driver for hubble's HUSBZB-1.**
+  Its EM3581 Zigbee radio can't run EmberZNet 7.4 (EZSP v13), which `ember`
+  needs. zigbee-herdsman 11.2 (zigbee2mqtt 2.14.3) still ships `ezsp` for
+  pre-7.4 firmware. The stick talks at 57600 baud, so the group now also
+  requires `meta.zigbee_adapter_baudrate`, passed as `serial.baudrate`.
 - **zigbee2mqtt's state is local to its host, not on NFS.** It's in
   `/Users/violet/zigbee2mqtt-local/data`, like dispatcharr's and lidarr's
   local dirs. The group can only run where the coordinator is plugged in,

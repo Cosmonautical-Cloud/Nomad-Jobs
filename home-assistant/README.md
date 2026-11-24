@@ -121,13 +121,26 @@ coordinator plugged in:
    ```yaml
    nomad_client_meta__zigbee:
      zigbee_adapter: /dev/cu.usbserial-XXXX   # ls /dev/cu.* with it plugged in
-     zigbee_adapter_type: ember               # ember | zstack | deconz | zigate | zboss
+     zigbee_adapter_type: ezsp                # ember | ezsp | zstack | deconz | zigate | zboss
+     zigbee_adapter_baudrate: "57600"         # usually 115200
    ```
 
-   `zigbee_adapter_type` is zigbee2mqtt's `serial.adapter`. For example,
-   Sonoff's ZBDongle-E is `ember` and its ZBDongle-P is `zstack`.
+   `zigbee_adapter_type` is zigbee2mqtt's `serial.adapter` and
+   `zigbee_adapter_baudrate` its `serial.baudrate`. For example, Sonoff's
+   ZBDongle-E is `ember` at 115200 and its ZBDongle-P is `zstack` at 115200.
 
-Until both are in place, the `zigbee2mqtt` group shows as a placement
+   **hubble's coordinator is a Nortek HUSBZB-1** (Zigbee + Z-Wave combo,
+   Silicon Labs `10c4:8a2a`). Its Zigbee radio is an EM3581, whose firmware
+   stops before EmberZNet 7.4, so `ember` can't drive it. It uses the
+   deprecated `ezsp` driver (still in zigbee-herdsman 11.2, which logs a
+   deprecation warning on start) at 57600 baud. macOS's built-in Silicon
+   Labs driver doesn't match its product ID, so hubble needs Silicon Labs'
+   CP210x VCP driver, approved in System Settings, before a `/dev/cu.*`
+   device appears. Use the ZigBee interface's device, not the Z-Wave one.
+   If `ezsp` is ever removed, the way forward is a newer EFR32-based
+   coordinator on `ember`.
+
+Until all three are in place, the `zigbee2mqtt` group shows as a placement
 failure. The other groups run normally, but the job's deployment won't go
 healthy.
 

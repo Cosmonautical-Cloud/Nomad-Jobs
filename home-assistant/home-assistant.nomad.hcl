@@ -135,6 +135,11 @@ EOT
       operator  = "is_set"
     }
 
+    constraint {
+      attribute = "${meta.zigbee_adapter_baudrate}"
+      operator  = "is_set"
+    }
+
     network {
       port "zigbee2mqtt" {}
     }
@@ -221,8 +226,9 @@ EOT
         ZIGBEE2MQTT_DATA      = "${local.zigbee2mqtt_data}"
         Z2M_ONBOARD_NO_SERVER = "1"
 
-        ZIGBEE2MQTT_CONFIG_SERIAL_PORT    = "${meta.zigbee_adapter}"
-        ZIGBEE2MQTT_CONFIG_SERIAL_ADAPTER = "${meta.zigbee_adapter_type}"
+        ZIGBEE2MQTT_CONFIG_SERIAL_PORT     = "${meta.zigbee_adapter}"
+        ZIGBEE2MQTT_CONFIG_SERIAL_ADAPTER  = "${meta.zigbee_adapter_type}"
+        ZIGBEE2MQTT_CONFIG_SERIAL_BAUDRATE = "${meta.zigbee_adapter_baudrate}"
 
         ZIGBEE2MQTT_CONFIG_MQTT_USER = "zigbee2mqtt"
 
