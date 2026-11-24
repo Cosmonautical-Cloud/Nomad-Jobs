@@ -5,10 +5,7 @@ job "dispatcharr" {
   group "server" {
     count = 1
 
-    constraint {
-      attribute = "${attr.unique.hostname}"
-      value     = "orion.cosmonautical.cloud"
-    }
+  
 
     network {
       port "http" {
