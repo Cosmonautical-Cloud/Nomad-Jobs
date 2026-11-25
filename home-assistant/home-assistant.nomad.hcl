@@ -204,6 +204,11 @@ EOT
             npm install --prefix "$prefix" --omit=dev --no-audit --no-fund \
               zigbee2mqtt@${local.zigbee2mqtt_version}
           fi
+
+          # Touchlink fix for the ezsp adapter (see CHANGELOG 2026-11-24).
+          # No-op once upstream assigns the waiter itself.
+          ezsp_adapter="$prefix/node_modules/zigbee-herdsman/dist/adapter/ezsp/adapter/ezspAdapter.js"
+          sed -i '' 's/^\( *\)this\.waitForInternal(undefined, 0xfe,/\1response = this.waitForInternal(undefined, 0xfe,/' "$ezsp_adapter"
           EOT
         ]
       }
@@ -236,10 +241,6 @@ EOT
 
         ZIGBEE2MQTT_CONFIG_FRONTEND_ENABLED = "true"
         ZIGBEE2MQTT_CONFIG_FRONTEND_PORT    = "${NOMAD_PORT_zigbee2mqtt}"
-
-        ZIGBEE2MQTT_CONFIG_ADVANCED_NETWORK_KEY = "GENERATE"
-        ZIGBEE2MQTT_CONFIG_ADVANCED_PAN_ID      = "GENERATE"
-        ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID  = "GENERATE"
       }
 
       template {
@@ -255,6 +256,9 @@ EOT
         data        = <<EOT
 ZIGBEE2MQTT_CONFIG_MQTT_PASSWORD={{ key "home-assistant/MQTT_ZIGBEE2MQTT_PASSWORD" }}
 ZIGBEE2MQTT_CONFIG_FRONTEND_AUTH_TOKEN={{ key "home-assistant/ZIGBEE2MQTT_FRONTEND_TOKEN" }}
+ZIGBEE2MQTT_CONFIG_ADVANCED_NETWORK_KEY={{ key "home-assistant/ZIGBEE_NETWORK_KEY" }}
+ZIGBEE2MQTT_CONFIG_ADVANCED_PAN_ID={{ key "home-assistant/ZIGBEE_PAN_ID" }}
+ZIGBEE2MQTT_CONFIG_ADVANCED_EXT_PAN_ID={{ key "home-assistant/ZIGBEE_EXT_PAN_ID" }}
 EOT
         destination = "secrets/zigbee2mqtt.env"
         env         = true
