@@ -224,8 +224,36 @@ created once if missing and then left to the apps.
    `https://casa.cosmonautical.cloud` and that token.
 
 Containers here sit behind the VM's NAT, so Home Assistant's LAN discovery
-(mDNS/SSDP/HomeKit) won't see devices on its own. Add those integrations
-manually by IP.
+(mDNS/SSDP) won't see devices on its own. Add those integrations manually by
+IP.
+
+## HomeKit Bridge
+
+The Home app finds a HomeKit Bridge through its mDNS (`_hap._tcp`) advert
+and then connects to the advertised address and port. Inside the container,
+neither reaches the LAN. The advert stays on the container network's
+`bridge100`, and the address is the container's own `192.168.64.x`. So the
+job does two things:
+
+- **Publishes port 21064** (`homekit`, static) from the host into the
+  container. The bridge in Home Assistant has to keep port `21064`. A second
+  bridge needs its own port, both here and in the relay's port filter.
+- **The `homekit-mdns` sidecar** (`raw_exec`, Python `zeroconf` in a venv
+  in the alloc dir) watches `bridge1xx` for `_hap._tcp` adverts on that port
+  and registers each one on the LAN with the host's IP. When Home Assistant
+  changes the TXT record (pairing status `sf`, config number `c#`), it
+  re-announces it. On shutdown it sends goodbyes, so the bridge doesn't
+  linger in the Home app's list.
+
+To pair, open **Settings → Devices & services → HomeKit Bridge** in Home
+Assistant. The pairing QR code is in the notification it creates. Scan it
+from the Home app (**+ → Add Accessory**). It's an uncertified accessory,
+so the Home app asks you to confirm.
+
+The sidecar needs Local Network access, which it inherits from `nomad`. Like
+the other raw_exec tasks, restart it after a rolling Nomad restart if the
+bridge drops out of the Home app. It can't be tested over SSH: there, macOS
+blocks its multicast with `No route to host`.
 
 ## Consul KV keys
 

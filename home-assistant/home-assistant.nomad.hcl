@@ -9,6 +9,8 @@ locals {
   zigbee2mqtt_version = "2.14.3"
   ldap3_version       = "2.9.1"
 
+  zeroconf_version = "0.154.0"
+
   esphome_version                = "2026.11.0"
   esphome_device_builder_version = "1.28.1"
 }
@@ -289,6 +291,11 @@ EOT
 
     network {
       port "http" { to = 8123 }
+      # HomeKit Bridge (HAP). Must match the bridge's port in Home Assistant.
+      port "homekit" {
+        static = 21064
+        to     = 21064
+      }
     }
 
     task "wait-for-mqtt" {
@@ -507,7 +514,7 @@ EOT
 
       config {
         image = "ghcr.io/home-assistant/home-assistant:2026.11.2"
-        ports = ["http"]
+        ports = ["http", "homekit"]
 
         volumes = [
           "${local.data_root}/config:/config",
@@ -558,6 +565,150 @@ EOT
       resources {
         cpu    = 2
         memory = 1024
+      }
+    }
+
+    # Home Assistant's HomeKit Bridge advertises itself over mDNS, but the
+    # advert only reaches the container network's bridge (bridge100), so
+    # iPhones and home hubs never discover it. This task watches for HAP
+    # adverts on the container network for the published HomeKit port and
+    # re-registers them on the LAN with the host's IP, updating the TXT
+    # record (pairing status, config number) whenever Home Assistant does.
+    task "homekit-mdns" {
+      driver = "raw_exec"
+
+      lifecycle {
+        hook    = "poststart"
+        sidecar = true
+      }
+
+      template {
+        data        = <<EOT
+"""Relay HomeKit (HAP) mDNS adverts from the container network to the LAN."""
+
+import ipaddress
+import logging
+import os
+import re
+import signal
+import socket
+import threading
+
+import ifaddr
+from zeroconf import IPVersion, ServiceBrowser, ServiceInfo, ServiceStateChange, Zeroconf
+
+HAP_TYPE = "_hap._tcp.local."
+PORT = int(os.environ["HOMEKIT_PORT"])
+LAN_IP = os.environ["LAN_IP"]
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+log = logging.getLogger("homekit-mdns")
+
+
+def container_network_ips():
+    """IPv4 addresses of the host's vmnet bridges (bridge100, bridge101, ...)."""
+    ips = []
+    for adapter in ifaddr.get_adapters():
+        if not re.fullmatch(r"bridge1\d\d", adapter.nice_name):
+            continue
+        for ip in adapter.ips:
+            if isinstance(ip.ip, str) and not ipaddress.ip_address(ip.ip).is_link_local:
+                ips.append(ip.ip)
+    return ips
+
+
+def main():
+    inner_ips = container_network_ips()
+    if not inner_ips:
+        raise SystemExit("no container network bridge found")
+    log.info("relaying %s port %d from %s to %s", HAP_TYPE, PORT, inner_ips, LAN_IP)
+
+    inner = Zeroconf(interfaces=inner_ips, ip_version=IPVersion.V4Only)
+    outer = Zeroconf(interfaces=[LAN_IP], ip_version=IPVersion.V4Only)
+    relayed = {}
+    lock = threading.Lock()
+
+    def on_change(zeroconf, service_type, name, state_change):
+        with lock:
+            if state_change is ServiceStateChange.Removed:
+                info = relayed.pop(name, None)
+                if info is not None:
+                    log.info("removed %s", name)
+                    outer.unregister_service(info)
+                return
+
+            src = inner.get_service_info(service_type, name, timeout=3000)
+            if src is None or src.port != PORT:
+                return
+            info = ServiceInfo(
+                service_type,
+                name,
+                port=PORT,
+                properties=src.properties,
+                server=src.server,
+                addresses=[socket.inet_aton(LAN_IP)],
+            )
+            old = relayed.get(name)
+            try:
+                if old is None:
+                    outer.register_service(info, allow_name_change=False)
+                    log.info("registered %s at %s:%d %s", name, LAN_IP, PORT, src.properties)
+                elif old.properties != info.properties:
+                    outer.update_service(info)
+                    log.info("updated %s %s", name, src.properties)
+                else:
+                    return
+            except Exception:
+                log.exception("relaying %s failed", name)
+                return
+            relayed[name] = info
+
+    ServiceBrowser(inner, HAP_TYPE, handlers=[on_change])
+
+    stop = threading.Event()
+    signal.signal(signal.SIGTERM, lambda *_: stop.set())
+    signal.signal(signal.SIGINT, lambda *_: stop.set())
+    stop.wait()
+
+    with lock:
+        for info in relayed.values():
+            outer.unregister_service(info)
+    inner.close()
+    outer.close()
+
+
+if __name__ == "__main__":
+    main()
+EOT
+        destination = "local/homekit_mdns.py"
+      }
+
+      config {
+        command = "/bin/sh"
+        args = [
+          "-c",
+          <<-EOT
+          set -eu
+          venv="$NOMAD_ALLOC_DIR/homekit-mdns"
+          if [ ! -d "$venv/lib/python3.14/site-packages/zeroconf-${local.zeroconf_version}.dist-info" ]; then
+            rm -rf "$venv"
+            /opt/homebrew/opt/python@3.14/bin/python3.14 -m venv "$venv"
+            "$venv/bin/pip" install --quiet --disable-pip-version-check \
+              zeroconf==${local.zeroconf_version}
+          fi
+          exec "$venv/bin/python" -u "$NOMAD_TASK_DIR/homekit_mdns.py"
+          EOT
+        ]
+      }
+
+      env {
+        HOMEKIT_PORT = "${NOMAD_HOST_PORT_homekit}"
+        LAN_IP       = "${NOMAD_IP_homekit}"
+      }
+
+      resources {
+        cpu    = 1
+        memory = 128
       }
     }
   }
