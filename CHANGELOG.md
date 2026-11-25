@@ -263,6 +263,9 @@ Newest entries first, grouped by job.
   proxy support and `casa.cosmonautical.cloud` returned 400. The settings
   were fixed in the UI (trusted proxies `10.10.37.0/24`, `192.168.64.0/24`).
   The leftover YAML only raised a "migrated and now ignored" repair.
+- **hubble's HUSBZB-1 flashed to EmberZNet 6.7.8.** zigbee2mqtt crash-looped
+  on the stock 5.4.1 firmware (EZSP v4, `Failure send clearTransientLinkKeys`).
+  After the flash it formed the network and started, still on `ezsp` at 57600.
 
 ### 2026-11-23
 

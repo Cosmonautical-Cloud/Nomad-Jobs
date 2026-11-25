@@ -137,6 +137,14 @@ coordinator plugged in:
    Labs driver doesn't match its product ID, so hubble needs Silicon Labs'
    CP210x VCP driver, approved in System Settings, before a `/dev/cu.*`
    device appears. Use the ZigBee interface's device, not the Z-Wave one.
+   **The stick's stock firmware (EmberZNet 5.4.1, EZSP v4) is too old for
+   zigbee-herdsman**: startup fails at `clearTransientLinkKeys` while forming
+   the network. hubble's stick was flashed to EmberZNet 6.7.8 (EZSP v8) on
+   2026-11-24 with `ncp.py flash -f ncp-uart-sw-6.7.8.ebl` from
+   [walthowd/husbzb-firmware](https://github.com/walthowd/husbzb-firmware),
+   which keeps 57600 baud and software flow control. A replacement HUSBZB-1
+   needs the same flash. Stop zigbee2mqtt first (scale the group to 0), and
+   skip `ncp.py scan`, which hangs probing the Z-Wave port on macOS.
    If `ezsp` is ever removed, the way forward is a newer EFR32-based
    coordinator on `ember`.
 
