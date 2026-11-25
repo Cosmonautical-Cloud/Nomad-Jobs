@@ -392,14 +392,6 @@ homeassistant:
     # Local accounts: onboarding's owner account, kept as a break-glass login.
     - type: homeassistant
 
-http:
-  use_x_forwarded_for: true
-  # Traefik reaches the container through the host's published port, so
-  # requests arrive from the LAN or from the container network's gateway.
-  trusted_proxies:
-    - 10.10.37.0/24
-    - 192.168.65.0/24
-
 recorder:
   db_url: !env_var RECORDER_DB_URL
 

@@ -272,6 +272,20 @@ Newest entries first, grouped by job.
   unfixed upstream as of herdsman 11.2.5. `prepare` patches the installed
   copy with an idempotent `sed`, a no-op once upstream fixes it. Touchlink
   is the only way to factory-reset Hue bulbs without a Hue bridge or dimmer.
+  
+  (home-assistant)
+- **Removed the `http:` block from `configuration.yaml`.** Home Assistant
+  2026.11 imports it into `.storage/http` once, as a pending config that
+  has to be confirmed in the UI within 5 minutes, and ignores the YAML after
+  that. The import trusted `192.168.65.0/24`, but Traefik's requests reach
+  the container from `192.168.64.1`, the Apple container network's gateway.
+  Nothing coming through Traefik could confirm it, so it reverted to no
+  proxy support and `casa.cosmonautical.cloud` returned 400. The settings
+  were fixed in the UI (trusted proxies `10.10.37.0/24`, `192.168.64.0/24`).
+  The leftover YAML only raised a "migrated and now ignored" repair.
+- **hubble's HUSBZB-1 flashed to EmberZNet 6.7.8.** zigbee2mqtt crash-looped
+  on the stock 5.4.1 firmware (EZSP v4, `Failure send clearTransientLinkKeys`).
+  After the flash it formed the network and started, still on `ezsp` at 57600.
 
 ### 2026-11-23
 
