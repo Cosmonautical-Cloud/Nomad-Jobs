@@ -137,6 +137,14 @@ coordinator plugged in:
    Labs driver doesn't match its product ID, so hubble needs Silicon Labs'
    CP210x VCP driver, approved in System Settings, before a `/dev/cu.*`
    device appears. Use the ZigBee interface's device, not the Z-Wave one.
+   **The stick's stock firmware (EmberZNet 5.4.1, EZSP v4) is too old for
+   zigbee-herdsman**: startup fails at `clearTransientLinkKeys` while forming
+   the network. hubble's stick was flashed to EmberZNet 6.7.8 (EZSP v8) on
+   2026-11-24 with `ncp.py flash -f ncp-uart-sw-6.7.8.ebl` from
+   [walthowd/husbzb-firmware](https://github.com/walthowd/husbzb-firmware),
+   which keeps 57600 baud and software flow control. A replacement HUSBZB-1
+   needs the same flash. Stop zigbee2mqtt first (scale the group to 0), and
+   skip `ncp.py scan`, which hangs probing the Z-Wave port on macOS.
    If `ezsp` is ever removed, the way forward is a newer EFR32-based
    coordinator on `ember`.
 
@@ -189,6 +197,16 @@ These are overwritten on every deploy, so edit them here and not on disk:
 - `config/configuration.yaml`. Add extra YAML as `config/packages/<name>.yaml`.
 - `config/ldap-auth/ldap_auth.py`
 - `node-red/settings.js`
+
+**HTTP settings are UI-owned.** Since 2026.11, Home Assistant reads `http:`
+from `configuration.yaml` only once, imports it, and ignores it afterwards.
+The reverse-proxy settings live under **Settings > System > Network > HTTP
+server**: `X-Forwarded-For` on, trusted proxies `10.10.37.0/24` and
+`192.168.64.0/24`. Traefik reaches the container through the host's
+published port, so requests arrive from the LAN or from the Apple container
+network's gateway (`192.168.64.1`, `bridge100`). An HTTP change is applied as
+a trial after a restart and reverts after 5 minutes unless you confirm it in
+the UI, so open the site through Traefik to confirm it.
 
 Everything else, including Home Assistant's `.storage/`, `automations.yaml`,
 `scripts.yaml`, `scenes.yaml`, and Node-RED's flows and credentials, is
