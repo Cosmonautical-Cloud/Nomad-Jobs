@@ -252,6 +252,27 @@ Newest entries first, grouped by job.
 
 ## home-assistant
 
+### 2026-11-24 (zigbee2mqtt network)
+
+- **zigbee2mqtt's network settings come from Consul KV, not `GENERATE`.**
+  The job set `ZIGBEE2MQTT_CONFIG_ADVANCED_NETWORK_KEY`/`PAN_ID`/`EXT_PAN_ID`
+  to `GENERATE` as env vars. Env vars override `configuration.yaml` on every
+  start, so each start made up a new key and PAN ID. The first start formed a
+  network with one set, and the first restart afterwards failed with
+  `configuration-adapter mismatch`. The values now come from
+  `home-assistant/ZIGBEE_NETWORK_KEY`, `ZIGBEE_PAN_ID` and
+  `ZIGBEE_EXT_PAN_ID`, seeded from the network already on hubble's stick
+  (PAN 5324, channel 11), so paired devices keep working. Having them in KV
+  also means the network can be rebuilt on a replacement stick.
+- **Touchlink works on the `ezsp` adapter.** zigbee-herdsman's
+  `sendZclFrameInterPANBroadcast` never assigns the waiter it creates
+  (`this.waitForInternal(...)` instead of `response = ...`), so it always
+  returns `undefined` and every Touchlink scan, identify and factory reset
+  fails with `Cannot read properties of undefined (reading 'address')`. Still
+  unfixed upstream as of herdsman 11.2.5. `prepare` patches the installed
+  copy with an idempotent `sed`, a no-op once upstream fixes it. Touchlink
+  is the only way to factory-reset Hue bulbs without a Hue bridge or dimmer.
+
 ### 2026-11-23
 
 - **New `esphome` group: ESPHome Device Builder at

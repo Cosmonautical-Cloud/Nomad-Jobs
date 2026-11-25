@@ -218,6 +218,9 @@ manually by IP.
 | `home-assistant/MQTT_ZIGBEE2MQTT_PASSWORD` | Mosquitto user `zigbee2mqtt` |
 | `home-assistant/MQTT_NODERED_PASSWORD` | Mosquitto user `nodered`, for any MQTT nodes in Node-RED flows |
 | `home-assistant/ZIGBEE2MQTT_FRONTEND_TOKEN` | zigbee2mqtt frontend auth token |
+| `home-assistant/ZIGBEE_NETWORK_KEY` | Zigbee network key, a JSON array of 16 bytes. **Changing it, or `ZIGBEE_PAN_ID`/`ZIGBEE_EXT_PAN_ID`, means re-pairing every device.** |
+| `home-assistant/ZIGBEE_PAN_ID` | Zigbee PAN ID, decimal |
+| `home-assistant/ZIGBEE_EXT_PAN_ID` | Zigbee extended PAN ID, a JSON array of 8 bytes |
 | `home-assistant/NODE_RED_OIDC_CLIENT_SECRET` | Keycloak `node-red` client secret |
 | `home-assistant/ESPHOME_PASSWORD` | ESPHome dashboard password for user `admin` |
 | `home-assistant/NODE_RED_CREDENTIAL_SECRET` | Encrypts Node-RED's `flows_cred.json`. **Changing it makes existing flow credentials unreadable.** |
