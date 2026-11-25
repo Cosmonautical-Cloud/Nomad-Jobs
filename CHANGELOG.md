@@ -272,8 +272,19 @@ Newest entries first, grouped by job.
   unfixed upstream as of herdsman 11.2.5. `prepare` patches the installed
   copy with an idempotent `sed`, a no-op once upstream fixes it. Touchlink
   is the only way to factory-reset Hue bulbs without a Hue bridge or dimmer.
-  
-  (home-assistant)
+
+### 2026-11-24 (home-assistant)
+
+- **HomeKit Bridge reachable from the LAN.** Adding it in the Home app
+  failed with "Accessory Not Found". orion could see the advert (`HASS
+  Bridge D933D7`), but only on `bridge100`, the container network. macOS
+  doesn't forward mDNS from there, and port 21064 wasn't published. The
+  group now publishes static port `homekit` (21064). A new `homekit-mdns`
+  sidecar (raw_exec, `zeroconf` 0.154.0) re-registers the bridge's
+  `_hap._tcp` advert on the LAN with the host's IP, and keeps its TXT
+  record in sync. Apple `container` has no host or bridged networking, so
+  relaying the advert was the smallest fix. Running Home Assistant itself
+  under raw_exec would have meant an unsupported macOS core install.
 - **Removed the `http:` block from `configuration.yaml`.** Home Assistant
   2026.11 imports it into `.storage/http` once, as a pending config that
   has to be confirmed in the UI within 5 minutes, and ignores the YAML after
