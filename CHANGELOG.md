@@ -250,6 +250,84 @@ Newest entries first, grouped by job.
   PRs are a signal only, they can't recompute the sha256 a human still has
   to update by hand.
 
+## home-assistant
+
+### 2026-11-23
+
+- **New `esphome` group: ESPHome Device Builder at
+  `esphome.cosmonautical.cloud`.** It runs under `raw_exec` from a venv
+  (Homebrew `python@3.14`, ESPHome 2026.11.0, Device Builder 1.28.1)
+  instead of the `ghcr.io/esphome/esphome` container, so mDNS works for
+  device status and OTA by hostname. ESPHome 2026.11 removed the built-in
+  `esphome dashboard`, and Device Builder replaces it. It's
+  password-protected (`home-assistant/ESPHOME_PASSWORD`) because Device
+  Builder has no SSO.
+- **zigbee2mqtt split into its own group, so it can run on an Intel Mac.**
+  The Zigbee coordinator is going on a 2012 Intel Mac mini. Apple
+  `container` only runs on Apple silicon, so Mosquitto couldn't share a
+  group with zigbee2mqtt on that host. `mqtt` now holds only Mosquitto and
+  can run on any cosmonautical node. The new `zigbee2mqtt` group keeps the
+  `iot` and adapter constraints, waits for a healthy `mqtt` service, and
+  reaches the broker at an address rendered from Consul with
+  `change_mode = "restart"`. Its `raw_exec` tasks inherit `nomad`'s Local
+  Network permission, so loopback isn't needed anymore.
+- **zigbee2mqtt uses the deprecated `ezsp` driver for hubble's HUSBZB-1.**
+  Its EM3581 Zigbee radio can't run EmberZNet 7.4 (EZSP v13), which `ember`
+  needs. zigbee-herdsman 11.2 (zigbee2mqtt 2.14.3) still ships `ezsp` for
+  pre-7.4 firmware. The stick talks at 57600 baud, so the group now also
+  requires `meta.zigbee_adapter_baudrate`, passed as `serial.baudrate`.
+- **zigbee2mqtt's state is local to its host, not on NFS.** It's in
+  `/Users/violet/zigbee2mqtt-local/data`, like dispatcharr's and lidarr's
+  local dirs. The group can only run where the coordinator is plugged in,
+  so NFS bought nothing, and hubble then doesn't need the NFS share at all.
+- **Node for zigbee2mqtt comes from nodejs.org instead of Homebrew.**
+  `prepare` downloads Node 24.22.3 for the host's architecture and checks it
+  against `SHASUMS256.txt`. The hardcoded `/opt/homebrew/opt/node@24` path
+  doesn't exist on Intel Homebrew (`/usr/local`), and Intel Homebrew support
+  is winding down. The `node@24` `group_vars/iot.yml` prerequisite is gone.
+- **Home Assistant's MQTT broker is `mqtt.service.consul:1883`.** The old
+  comment saying containers can't resolve `*.service.consul` was stale.
+  Dispatcharr, Keycloak and Open WebUI all resolve it through
+  `/etc/resolver/consul`. Mosquitto's port stays static because DNS returns
+  only the address.
+- **Version bumps before first deploy:** Home Assistant 2026.9.4 →
+  2026.11.2, Node-RED 5.0.7 → 5.0.10, zigbee2mqtt 2.14.2 → 2.14.3 (still
+  supports Node 24), Mosquitto 2.0.22 → 2.0.23,
+  `node-red-contrib-home-assistant-websocket` 0.81.0 → 0.83.0. The
+  2026.10/2026.11 breaking changes don't touch this job. It doesn't use the
+  removed legacy mode of the `homeassistant` auth provider, and it has no
+  YAML-defined MQTT entities. Mosquitto stays on 2.0.x for now; 2.1 is a
+  separate bump.
+- **Mosquitto memory 64 → 256 MB.** Apple `container` refuses VMs under
+  200 MiB, so it would have failed its first start, the same way guacd did.
+  The memory-floor convention test caught it after the rebase.
+
+### 2026-10-05
+
+- **New job: Home Assistant, Node-RED, Mosquitto and zigbee2mqtt.** These
+  run as three groups in one job, so they deploy together but can be
+  scheduled on separate nodes. Startup order is enforced with `wait-for-*`
+  prestarts that poll Consul health, because Nomad has no cross-group
+  dependency ordering.
+- **zigbee2mqtt runs under `raw_exec`, not a container.** Apple's
+  `container` VMs have no USB passthrough. It's pinned to `iot` hosts that
+  publish `meta.zigbee_adapter`/`zigbee_adapter_type`, and uses Homebrew
+  `node@24` because Homebrew's unversioned `node` (26.5) is past
+  zigbee2mqtt 2.14's supported range (<=26.2).
+- **Config files go onto NFS from raw_exec prestarts.** The container
+  driver doesn't mount Nomad's `/local`, `/secrets` or `/alloc` into the
+  VM (checked with `container inspect` on romm), so container tasks only
+  receive env vars. Mosquitto's password file is built inside the container
+  from env.
+- **Home Assistant LDAP login is a `command_line` provider using vendored
+  `ldap3`.** The 2026.9.4 image has no `ldapsearch`, its curl is built
+  without LDAP, and `ldap3` isn't installed. That was checked by running
+  the image.
+- **Node-RED SSO requires `Admins` in the ID token's `groups` claim.** The
+  check needs the raw ID token, so the `verify` callback takes five
+  arguments: `passport-openidconnect` chooses what to pass by the callback's
+  arity, and Node-RED 5 keeps that arity when it wraps `verify`.
+
 ## romm
 
 ### 2026-09-30

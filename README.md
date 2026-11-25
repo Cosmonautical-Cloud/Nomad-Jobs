@@ -37,6 +37,7 @@ datacenter: [`Jellify/Nomad-Jobs`](https://github.com/Jellify-Music/Nomad-Jobs)
 - [`deemix`](deemix)
 - [`dispatcharr`](dispatcharr)
 - [`guacamole`](guacamole)
+- [`home-assistant`](home-assistant)
 - [`jellyfin`](jellyfin)
 - [`keycloak`](keycloak)
 - [`lidarr`](lidarr)
@@ -83,6 +84,8 @@ datacenter: [`Jellify/Nomad-Jobs`](https://github.com/Jellify-Music/Nomad-Jobs)
 │   └── dispatcharr.nomad.hcl
 ├── guacamole/
 │   └── guacamole.nomad.hcl
+├── home-assistant/
+│   └── home-assistant.nomad.hcl
 ├── jellyfin/
 │   └── jellyfin.nomad.hcl
 ├── keycloak/
