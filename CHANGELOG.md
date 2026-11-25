@@ -252,6 +252,18 @@ Newest entries first, grouped by job.
 
 ## home-assistant
 
+### 2026-11-24
+
+- **Removed the `http:` block from `configuration.yaml`.** Home Assistant
+  2026.11 imports it into `.storage/http` once, as a pending config that
+  has to be confirmed in the UI within 5 minutes, and ignores the YAML after
+  that. The import trusted `192.168.65.0/24`, but Traefik's requests reach
+  the container from `192.168.64.1`, the Apple container network's gateway.
+  Nothing coming through Traefik could confirm it, so it reverted to no
+  proxy support and `casa.cosmonautical.cloud` returned 400. The settings
+  were fixed in the UI (trusted proxies `10.10.37.0/24`, `192.168.64.0/24`).
+  The leftover YAML only raised a "migrated and now ignored" repair.
+
 ### 2026-11-23
 
 - **New `esphome` group: ESPHome Device Builder at

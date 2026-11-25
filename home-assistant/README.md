@@ -190,6 +190,16 @@ These are overwritten on every deploy, so edit them here and not on disk:
 - `config/ldap-auth/ldap_auth.py`
 - `node-red/settings.js`
 
+**HTTP settings are UI-owned.** Since 2026.11, Home Assistant reads `http:`
+from `configuration.yaml` only once, imports it, and ignores it afterwards.
+The reverse-proxy settings live under **Settings > System > Network > HTTP
+server**: `X-Forwarded-For` on, trusted proxies `10.10.37.0/24` and
+`192.168.64.0/24`. Traefik reaches the container through the host's
+published port, so requests arrive from the LAN or from the Apple container
+network's gateway (`192.168.64.1`, `bridge100`). An HTTP change is applied as
+a trial after a restart and reverts after 5 minutes unless you confirm it in
+the UI, so open the site through Traefik to confirm it.
+
 Everything else, including Home Assistant's `.storage/`, `automations.yaml`,
 `scripts.yaml`, `scenes.yaml`, and Node-RED's flows and credentials, is
 created once if missing and then left to the apps.
