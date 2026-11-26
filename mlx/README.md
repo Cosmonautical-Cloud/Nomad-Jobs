@@ -36,7 +36,15 @@ Notable pieces:
     binary that dials the LAN.
 - **The two halves fail together.** If rank 1 dies, rank 0's generation
   thread fails, `/health` returns 503, and `check_restart` restarts it.
-  Rank 1 retries (`restart` in `delay` mode) until rank 0 is back.
+  `/health` is served on its own thread and only reports whether the
+  generation thread is alive, so a long reply doesn't fail it. Rank 1 has no
+  HTTP server and doesn't exit when rank 0 dies: it stays up at 100% CPU,
+  holding a dead coordinator connection, and no new rank 0 can join it. So
+  rank 1 registers `mlx-rank1` with a script check that curls rank 0's
+  `/health` across the link (`172.31.250.1:11435`), and `check_restart`
+  restarts it once rank 0 has been down for a minute. Its 5-minute grace
+  covers rank 0 waiting for it and both loading the model. Both groups
+  restart in `delay` mode, so neither gives up while the other is down.
 - **Memory.** Each host holds half the model. Rank 1 reserves only 2 GB in
   Nomad, since Nomad has little of orion left to hand out. raw_exec memory isn't enforced on macOS, and orion
   has far more free in practice.
