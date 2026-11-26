@@ -22,6 +22,26 @@ Newest entries first, grouped by job.
 
 ## mlx
 
+### 2026-11-25
+
+- **Down since 2026-11-24 19:08.** Rank 0 failed its health check and was
+  restarted, but rank 1 on orion never exited. It sat at 100% CPU for 36
+  hours with its coordinator connection in `CLOSE_WAIT`, so none of the 34
+  rank 0 restarts could join it. Rank 0 then hit the default restart policy
+  (2 attempts, `fail`) and waited on delayed reschedules. Fixed by restarting
+  rank 1, then forcing a rank 0 reschedule.
+- **Rank 1 now has a health check**: a `script` check on a new `mlx-rank1`
+  service curls rank 0's `/health` over the Thunderbolt link, and
+  `check_restart` (limit 2, grace 5m) restarts rank 1 when rank 0 is gone.
+  Rank 0's `/health` check stays as it was: it returns 503 only when the
+  generation thread has died, so it wasn't misfiring.
+- **Rank 0 restarts in `delay` mode** (10 attempts per 30m, 15s apart, the
+  same as rank 1) instead of giving up after 2.
+- After the restarts, the link itself turned out broken: Nomadintosh's
+  `thunderbolt_link` script had written each host's own MAC into its ARP
+  entry for the peer. That's fixed in Nomadintosh 6.5.2
+  (Cosmonautical-Cloud/Nomadintosh#40).
+
 ### Unreleased
 
 - **Split across taurus and orion over Thunderbolt 5.** The single `mlx`

@@ -122,6 +122,13 @@ job "mlx" {
         }
       }
 
+      restart {
+        attempts = 10
+        interval = "30m"
+        delay    = "15s"
+        mode     = "delay"
+      }
+
       resources {
         cpu    = 4
         memory = 8192
@@ -214,14 +221,29 @@ job "mlx" {
         MLX_IBV_DEVICES       = "${NOMAD_TASK_DIR}/ibv_devices.json"
       }
 
-      # No HTTP server on rank 1: it only takes rank 0's requests. If rank 0
-      # goes away, its collectives should fail and the process exit, so Nomad
-      # restarts it until rank 0 is back.
       config {
         command = "${NOMAD_ALLOC_DIR}/venv/bin/mlx_lm.server"
         args = [
           "--max-tokens=8192",
         ]
+      }
+
+      service {
+        name = "mlx-rank1"
+
+        check {
+          name     = "rank0 health over the link"
+          type     = "script"
+          command  = "/usr/bin/curl"
+          args     = ["-fsS", "-m", "5", "-o", "/dev/null", "http://172.31.250.1:11435/health"]
+          interval = "30s"
+          timeout  = "10s"
+
+          check_restart {
+            limit = 2
+            grace = "5m"
+          }
+        }
       }
 
       restart {
@@ -232,9 +254,7 @@ job "mlx" {
       }
 
       resources {
-        cpu = 4
-        # Nomad has ~2.5 GB of orion left to hand out. raw_exec memory isn't
-        # enforced on macOS, and orion has ~15 GB actually free.
+        cpu    = 4
         memory = 2048
       }
 
